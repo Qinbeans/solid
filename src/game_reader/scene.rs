@@ -1,14 +1,15 @@
-use bevy::{prelude::{Commands, TextBundle, Color, BuildChildren, error}, ui::{ZIndex::Global, Size, Val::Percent, PositionType::Absolute,UiRect, Style, node_bundles::ButtonBundle}, text::{TextStyle}};
+use bevy::{ecs::system::Res,prelude::{Commands, TextBundle, Color, BuildChildren, JustifyContent, AlignItems, info, AssetServer, Vec2}, ui::{ZIndex::Global, Size, Val::Percent, PositionType::Absolute,UiRect, Style, node_bundles::ButtonBundle}, text::{TextStyle}, scene::SceneBundle, sprite::{SpriteBundle, Sprite}};
 use serde::{Deserialize, Serialize};
 use crate::{game_reader::{
     location::Location,
-    functions::{Function, Results, Parameter},
+    functions::{Function, Value, Parameter},
 }, ui::component::UIType};
 use std::fmt::Display;
 use crate::game_reader::functions::{Vector3D, Vector2D, Vector4D};
+use std::{env, path::PathBuf};
 
 //map of functions
-const SCENE_FUNCTIONS: &[(&str, fn(&Description, &mut Commands, Vec<Parameter>))] = &[
+const SCENE_FUNCTIONS: &[(&str, fn(&Description, &mut Commands, &Res<AssetServer>, Vec<Parameter>))] = &[
     ("spawn_ui", Description::spawn_ui),
 ];
 
@@ -22,8 +23,8 @@ pub struct Scene {
 }
 
 impl Scene {
-    pub fn start(&mut self, commands: &mut Commands) {
-        self.description.start(commands);
+    pub fn start(&mut self, commands: &mut Commands, asset_server: &Res<AssetServer>) {
+        self.description.start(commands, asset_server);
     }
     #[allow(dead_code)]
     pub fn render(&mut self, commands: &mut Commands) {
@@ -39,17 +40,25 @@ impl Display for Scene {
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct Description {
+    pub background: Vector4D,
     pub locations: Vec<Location>,
     pub spawn: Option<Location>,
     pub actions: Vec<Function>,
     #[serde(skip_serializing, skip_deserializing)]
     #[allow(dead_code)]
-    pub results: Vec<Results>,
+    pub results: Vec<Value>,
 }
 impl Description {
     fn parse_button(&self, params: Vec<Parameter>) -> Result<ButtonBundle,&str> {
         //spawn button
-        let mut button_bundle = ButtonBundle::default();
+        let mut button_bundle = ButtonBundle {
+            style: Style {
+                justify_content: JustifyContent::Center,
+                align_items: AlignItems::Center,
+                ..Default::default()
+            },
+            ..Default::default()
+        };
         if params.get(1).is_none(){
             return Err("No position");
         }
@@ -80,7 +89,7 @@ impl Description {
         Ok(button_bundle)
     }
     
-    fn parse_text(&self, last_index: usize, params: Vec<Parameter>) -> Result<TextBundle, &str> {
+    fn parse_text(&self, last_index: usize, params: Vec<Parameter>, asset_server: &Res<AssetServer>) -> Result<TextBundle, &str> {
         if params.get(last_index + 1).is_none(){
             return Err("No font size");
         }
@@ -106,9 +115,19 @@ impl Description {
             Parameter::Color(v) => v,
             _ => &Vector4D{x: 1.0, y: 1.0, z: 1.0, w: 1.0},
         };
+        let execpath: PathBuf = {
+            if let Ok(ok) = env::current_exe() {
+                ok.parent().unwrap().to_path_buf()
+            } else {
+                "".into()
+            }
+        };
+        let file = execpath.join("core/assets/fonts/FiraSans-Bold.ttf");
+        info!("Text: {}", text);
         Ok(TextBundle::from_section(
             text, 
             TextStyle {
+                font: asset_server.load(file.to_str().unwrap()),
                 font_size: font,
                 color: Color::rgba(color.x as f32, color.y as f32, color.z as f32, color.w as f32),
                 ..Default::default()
@@ -116,8 +135,7 @@ impl Description {
         ))
     }
 
-    #[allow(dead_code)]
-    pub fn spawn_ui(&self, command: &mut Commands, params: Vec<Parameter>){
+    pub fn spawn_ui(&self, command: &mut Commands, asset_server: &Res<AssetServer>, params: Vec<Parameter>) {
         //spawns a UI component
         //first index is type
         if let Some(param1) = params.get(0){
@@ -139,7 +157,7 @@ impl Description {
                         return;
                     }
                     let button_bundle = button_bundle.unwrap();
-                    let text_bundle = self.parse_text(2, params);
+                    let text_bundle = self.parse_text(2, params, asset_server);
                     if text_bundle.is_err(){
                         return;
                     }
@@ -176,24 +194,24 @@ impl Description {
         }
     }
 
-    fn start(&mut self, command: &mut Commands){
+    fn start(&mut self, command: &mut Commands, asset_server: &Res<AssetServer>){
         for function in self.actions.clone() {
             let params = function.parameters.clone();
             let name = function.name.clone();
             //check if function is in the map
             if let Some((_, func)) = SCENE_FUNCTIONS.iter().find(|(n,_)| n == &name){
-                func(self, command, params);
+                func(self, command, asset_server, params);
             }
         }
     }
     fn render(&mut self, command: &mut Commands){
-        for function in self.actions.clone() {
-            let params = function.parameters.clone();
-            let name = function.name.clone();
-            //check if function is in the map
-            if let Some((_, func)) = SCENE_FUNCTIONS.iter().find(|(n,_)| n == &name){
-                func(self, command, params);
-            }
-        }
+        // for function in self.actions.clone() {
+        //     let params = function.parameters.clone();
+        //     let name = function.name.clone();
+        //     //check if function is in the map
+        //     if let Some((_, func)) = SCENE_FUNCTIONS.iter().find(|(n,_)| n == &name){
+        //         func(self, command, params);
+        //     }
+        // }
     }
 }

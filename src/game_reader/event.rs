@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use crate::game_reader::functions::{Function, Results};
+use crate::game_reader::functions::{Function};
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct Event {
@@ -16,8 +16,5 @@ pub struct Description {
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct Challenge {
     pub details: String,
-    actions: Vec<Function>,
-    #[serde(skip_serializing, skip_deserializing)]
-    #[allow(dead_code)]
-    results: Vec<Results>,
+    actions: Vec<Function>
 }

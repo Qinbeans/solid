@@ -1,6 +1,6 @@
 use bevy::sprite::SpriteBundle;
 use serde::{Deserialize, Serialize};
-use crate::game_reader::functions::{Function, Results, Vector2D};
+use crate::game_reader::functions::{Function, Vector2D};
 use core::fmt::Debug;
 use core::fmt::Formatter;
 use core::fmt::Result;
@@ -107,14 +107,11 @@ pub struct Player {
     #[serde(skip_serializing, skip_deserializing)]
     #[allow(dead_code)]
     entity: Option<SpriteBundle>,
-    #[serde(skip_serializing, skip_deserializing)]
-    #[allow(dead_code)]
-    results: Vec<Results>,
 }
 
 impl Debug for Player {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
-        write!(f, "Player {{ name: {}, position: {:?}, size: {:?}, texture_path: {}, action: {:?}, entity: {:?}, results: {:?} }}", self.name, self.position, self.size, self.texture_path, self.action, self.entity.is_some(), self.results)
+        write!(f, "Player {{ name: {}, position: {:?}, size: {:?}, texture_path: {}, action: {:?}, entity: {:?} }}", self.name, self.position, self.size, self.texture_path, self.action, self.entity.is_some())
     }
 }
 

@@ -32,7 +32,7 @@ impl Plugin for ScenePlugin {
     }
 }
 
-fn setup(mut command: Commands, mut state: ResMut<GameState>) {
+fn setup(mut command: Commands, mut state: ResMut<GameState>, asset_server: Res<AssetServer>) {
     command.spawn(Camera2dBundle::default());
     let execpath: PathBuf = {
         if let Ok(ok) = env::current_exe() {
@@ -91,7 +91,7 @@ fn setup(mut command: Commands, mut state: ResMut<GameState>) {
     };
     
     if let Some(some) = &mut state.current_scene {
-        some.start(&mut command);
+        some.start(&mut command, &asset_server);
     }
 }
 

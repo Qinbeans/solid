@@ -1,4 +1,4 @@
-Scene = {name = "Home", description = {locations = [], actions = [
+Scene = {name = "Home", description = {background = {x=0,y=0,z=0,w=0}, locations = [], actions = [
     {name = "spawn_ui", parameters = [
         {Ui = "button"},
         {Position = {x=5.0,y=5.0,z=1.0}},
