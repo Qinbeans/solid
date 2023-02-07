@@ -95,25 +95,23 @@ fn setup(mut command: Commands, mut state: ResMut<GameState>, asset_server: Res<
     }
 }
 
-fn render(state: ResMut<GameState>, mut interaction_query: Query<
+fn render(mut interaction_query: Query<
     (&Interaction, &mut BackgroundColor, &Children),
     (Changed<Interaction>, With<Button>),
 >,
 mut text_query: Query<&mut Text>,) {
     for (interaction, mut background_color, children) in interaction_query.iter_mut() {
+        #[allow(unused)]
         let mut text = text_query.get_mut(children[0]).unwrap();
         match *interaction {
             Interaction::Clicked => {
                 background_color.0 = crate::ui::ACTIVE;
-                println!("Button clicked")
             }
             Interaction::Hovered => {
                 background_color.0 = crate::ui::HOVER;
-                println!("Button hovered")
             }
             Interaction::None => {
                 background_color.0 = crate::ui::NORMAL;
-                println!("Button normal");
             }
         }
     }

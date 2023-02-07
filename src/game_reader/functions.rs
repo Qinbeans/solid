@@ -1,4 +1,3 @@
-use bevy::prelude::NodeBundle;
 //map out the functions
 //https://docs.rs/noise/latest/noise/
 use serde::{Deserialize, Serialize};
@@ -28,18 +27,25 @@ pub struct Vector4D {
 
 #[derive(Clone, Debug)]
 pub enum Value {
+    #[allow(dead_code)]
     String(String),
+    #[allow(dead_code)]
     Float(f64),
+    #[allow(dead_code)]
     Int(i64),
+    #[allow(dead_code)]
     Function(Function),
+    #[allow(dead_code)]
     Vector2D(Vector2D),
+    #[allow(dead_code)]
     Vector3D(Vector3D),
-    Vector4D(Vector4D),
-    Node(NodeBundle)
+    #[allow(dead_code)]
+    Vector4D(Vector4D)
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub enum Parameter {
+    Id(String),
     Ui(String),
     Position(Vector3D),
     Size(Vector2D),

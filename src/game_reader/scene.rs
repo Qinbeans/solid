@@ -1,16 +1,52 @@
-use bevy::{ecs::system::Res,prelude::{Commands, TextBundle, Color, BuildChildren, JustifyContent, AlignItems, info, AssetServer, Vec2}, ui::{ZIndex::Global, Size, Val::Percent, PositionType::Absolute,UiRect, Style, node_bundles::ButtonBundle}, text::{TextStyle}, scene::SceneBundle, sprite::{SpriteBundle, Sprite}};
+use bevy::{
+    ecs::system::Res,prelude::{
+        Commands,
+        TextBundle,
+        SpriteBundle,
+        Color,
+        BuildChildren,
+        JustifyContent,
+        AlignItems,
+        info,
+        AssetServer,
+        NodeBundle,
+        Vec2
+    },
+    ui::{
+        ZIndex::Global,
+        ZIndex::Local,
+        Size,
+        Val::Percent,
+        Val::Px,
+        PositionType::Absolute,
+        PositionType::Relative,
+        UiRect,
+        Style,
+        node_bundles::ButtonBundle
+    },
+    text::{TextStyle}, sprite::Sprite
+};
 use serde::{Deserialize, Serialize};
-use crate::{game_reader::{
-    location::Location,
-    functions::{Function, Value, Parameter},
-}, ui::component::UIType};
+use crate::{
+    game_reader::{
+        location::Location,
+        functions::{
+            Function,
+            Value,
+            Parameter
+        },
+    },
+    ui::component::UIType
+};
 use std::fmt::Display;
 use crate::game_reader::functions::{Vector3D, Vector2D, Vector4D};
 use std::{env, path::PathBuf};
 
 //map of functions
-const SCENE_FUNCTIONS: &[(&str, fn(&Description, &mut Commands, &Res<AssetServer>, Vec<Parameter>))] = &[
+const SCENE_FUNCTIONS: &[(&str, fn(&Description, &mut Commands, Option<NodeBundle>, &Res<AssetServer>, Vec<Parameter>))] = &[
     ("spawn_ui", Description::spawn_ui),
+    ("create_node", Description::create_node),
+    ("draw_texture", Description::draw_texture)
 ];
 
 //a plugin that loads the game data
@@ -73,7 +109,7 @@ impl Description {
             ..Default::default()
         };
         //use z to bring to front
-        button_bundle.z_index = Global(pos.z as i32);
+        button_bundle.z_index = Local(pos.z as i32);
         if params.get(2).is_none(){
             return Err("No dimensions");
         }
@@ -135,7 +171,7 @@ impl Description {
         ))
     }
 
-    pub fn spawn_ui(&self, command: &mut Commands, asset_server: &Res<AssetServer>, params: Vec<Parameter>) {
+    pub fn spawn_ui(&self, command: &mut Commands, node: Option<NodeBundle>, asset_server: &Res<AssetServer>, params: Vec<Parameter>) {
         //spawns a UI component
         //first index is type
         if let Some(param1) = params.get(0){
@@ -144,7 +180,6 @@ impl Description {
                 _ => "",
             };
             let tp = UIType::from_str(&value);
-            println!("Spawning UI: {}", value);
             if tp.is_none(){
                 return;
             }
@@ -162,9 +197,18 @@ impl Description {
                         return;
                     }
                     let text_bundle = text_bundle.unwrap();
-                    command.spawn(button_bundle).with_children(|parent|{
-                        parent.spawn(text_bundle);
-                    });
+                    if node.is_none(){
+                        command.spawn(button_bundle).with_children(|parent|{
+                            parent.spawn(text_bundle);
+                        });
+                    } else {
+                        let node = node.unwrap();
+                        command.spawn(node).with_children(|parent|{
+                            parent.spawn(button_bundle).with_children(|parent|{
+                                parent.spawn(text_bundle);
+                            });
+                        });
+                    }
                 },
                 UIType::Text => {
                     //spawn text
@@ -194,16 +238,139 @@ impl Description {
         }
     }
 
+    pub fn create_node(&self, command: &mut Commands, _node: Option<NodeBundle>, asset_server: &Res<AssetServer>, params: Vec<Parameter>) {
+        //get id
+        if params.get(0).is_none(){
+            return;
+        }
+        let pos = match params.get(0).unwrap(){
+            Parameter::Position(v) => v,
+            _ => &Vector3D{x: 0.0, y: 0.0, z: 0.0}
+        };
+        //size
+        if params.get(1).is_none(){
+            return;
+        }
+        let size = match params.get(1).unwrap(){
+            Parameter::Size(v) => v,
+            _ => &Vector2D{x: 0.0, y: 0.0}
+        };
+        if params.get(2).is_none(){
+            return;
+        }
+        let actions = match params.get(2).unwrap(){
+            Parameter::Actions(v) => v.clone(),
+            _ => Vec::new()
+        };
+        let node = NodeBundle {
+            style: Style {
+                size: Size::new(Percent(size.x as f32), Percent(size.y as f32)),
+                position_type: Relative,
+                position: UiRect {
+                    left: Px(pos.x as f32),
+                    top: Px(pos.y as f32),
+                    ..Default::default()
+                },
+                ..Default::default()
+            },
+            background_color: Color::rgba(0.0, 0.0, 0.0, 0.0).into(),
+            z_index: Global(pos.z as i32),
+            ..Default::default()
+        };
+        for action in actions {
+            let params = action.parameters.clone();
+            let name = action.name.clone();
+            //check if function is in the map
+            if let Some((_, func)) = SCENE_FUNCTIONS.iter().find(|(n,_)| n == &name){
+                func(self, command, Some(node.clone()), asset_server, params);
+            }
+        }
+    }
+
+    pub fn draw_texture(&self, command: &mut Commands, node: Option<NodeBundle>, asset_server: &Res<AssetServer>, params: Vec<Parameter>) {
+        //texture
+        if params.get(0).is_none(){
+            return;
+        }
+        let execpath: PathBuf = {
+            if let Ok(ok) = env::current_exe() {
+                ok.parent().unwrap().to_path_buf()
+            } else {
+                "".into()
+            }
+        };
+        let texture = match params.get(0).unwrap(){
+            Parameter::Texture(v) => v,
+            _ => ""
+        };
+        let file = execpath.join("core/assets/textures").join(texture);
+        let texture = asset_server.load(file);
+        //get position
+        if params.get(1).is_none(){
+            return;
+        }
+        #[allow(unused)]
+        let pos = match params.get(1).unwrap(){
+            Parameter::Position(v) => v,
+            _ => &Vector3D{x: 0.0, y: 0.0, z: 0.0}
+        };
+        //size
+        if params.get(2).is_none(){
+            if node.is_none(){
+                command.spawn(SpriteBundle {
+                    texture: texture,
+                    ..Default::default()
+                });
+            } else {
+                let node = node.unwrap();
+                command.spawn(node).with_children(|parent|{
+                    parent.spawn(SpriteBundle {
+                        texture: texture,
+                        ..Default::default()
+                    });
+                });
+            }
+            return;
+        }
+        let size = match params.get(2).unwrap(){
+            Parameter::Size(v) => v,
+            _ => &Vector2D{x: 0.0, y: 0.0}
+        };
+        if node.is_none(){
+            command.spawn(SpriteBundle {
+                sprite: Sprite {
+                    custom_size: Some(Vec2::new(size.x as f32, size.y as f32)),
+                    ..Default::default()
+                },
+                texture: texture,
+                ..Default::default()
+            });
+        } else {
+            let node = node.unwrap();
+            command.spawn(node).with_children(|parent|{
+                parent.spawn(SpriteBundle {
+                    sprite: Sprite {
+                        custom_size: Some(Vec2::new(size.x as f32, size.y as f32)),
+                        ..Default::default()
+                    },
+                    texture: texture,
+                    ..Default::default()
+                });
+            });
+        }
+    }
+
     fn start(&mut self, command: &mut Commands, asset_server: &Res<AssetServer>){
         for function in self.actions.clone() {
             let params = function.parameters.clone();
             let name = function.name.clone();
             //check if function is in the map
             if let Some((_, func)) = SCENE_FUNCTIONS.iter().find(|(n,_)| n == &name){
-                func(self, command, asset_server, params);
+                func(self, command, None, asset_server, params);
             }
         }
     }
+    #[allow(unused)]
     fn render(&mut self, command: &mut Commands){
         // for function in self.actions.clone() {
         //     let params = function.parameters.clone();

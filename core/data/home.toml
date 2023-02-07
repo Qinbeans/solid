@@ -1,11 +1,18 @@
 Scene = {name = "Home", description = {background = {x=0,y=0,z=0,w=0}, locations = [], actions = [
+    {name = "spawn_text", parameters = [
+        {Position = {x=50,y=5.0,z=1.0}},
+        {Size = {x=25.0,y=5.0}},
+        {Font = 16.0},
+        {Text = "Welcome to the game!"},
+        {Color = {x=0.25,y=0.25,z=0.25,w=1}}
+    ]},
     {name = "spawn_ui", parameters = [
         {Ui = "button"},
         {Position = {x=5.0,y=5.0,z=1.0}},
         {Size = {x=25.0,y=5.0}},
         {Font = 16.0},
         {Text = "New Game"},
-        {Color = {x=0,y=0,z=0,w=1}},
+        {Color = {x=0.25,y=0.25,z=0.25,w=1}},
         {Actions = [
             {name = "load_scene", parameters = [
                 {Scene = "new_game.toml"}
@@ -51,7 +58,6 @@ Scene = {name = "Home", description = {background = {x=0,y=0,z=0,w=0}, locations
     ]},
     {name = "draw_texture", parameters = [
         {Texture = "background.png"},
-        {Position = {x=0.0,y=0.0,z=0.0}},
-        {Size = {x=100.0,y=100.0}}
+        {Position = {x=0.0,y=0.0,z=0.0}}
     ]}
 ]}}
