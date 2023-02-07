@@ -1,5 +1,7 @@
 use bevy::{
-    ecs::system::Res,prelude::{
+    ecs::system::Res,
+    prelude::{
+        error,
         Commands,
         TextBundle,
         SpriteBundle,
@@ -46,7 +48,8 @@ use std::{env, path::PathBuf};
 const SCENE_FUNCTIONS: &[(&str, fn(&Description, &mut Commands, Option<NodeBundle>, &Res<AssetServer>, Vec<Parameter>))] = &[
     ("spawn_ui", Description::spawn_ui),
     ("create_node", Description::create_node),
-    ("draw_texture", Description::draw_texture)
+    ("draw_texture", Description::draw_texture),
+    ("spawn_text", Description::spawn_text)
 ];
 
 //a plugin that loads the game data
@@ -358,6 +361,38 @@ impl Description {
                 });
             });
         }
+    }
+
+    pub fn spawn_text(&self, command: &mut Commands, _node: Option<NodeBundle>, asset_server: &Res<AssetServer>, params: Vec<Parameter>) {
+        let res = self.parse_text(1, params.clone(), asset_server);
+        if res.is_err(){
+            let err = res.err().unwrap();
+            error!("Error: {}", err);
+            return;
+        }
+        if params.get(0).is_none(){
+            return;
+        }
+        let pos = match params.get(0).unwrap(){
+            Parameter::Position(p) => p,
+            _ => &Vector3D{x: 0.0, y: 0.0, z: 0.0}
+        };
+        if params.get(1).is_none(){
+            return;
+        }
+        let size = match params.get(1).unwrap(){
+            Parameter::Size(s) => s,
+            _ => &Vector2D{x: 0.0, y: 0.0}
+        };
+        let mut text = res.unwrap();
+        text.style.size = Size::new(Percent(size.x as f32), Percent(size.y as f32));
+        text.style.position_type = Relative;
+        text.style.position = UiRect {
+            left: Px(pos.x as f32),
+            top: Px(pos.y as f32),
+            ..Default::default()
+        };
+        command.spawn(text);
     }
 
     fn start(&mut self, command: &mut Commands, asset_server: &Res<AssetServer>){
