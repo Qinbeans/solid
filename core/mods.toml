@@ -3,3 +3,15 @@ version = "0.1.0"
 # Change this to reflect the game
 checksum = "sha256:0b0b1c1b0b0b1c1b0b0b1c1b0b0b1c1b0b0b1c1b0b0b1c1b0b0b1c1b0b0b1c1b0"
 entry = "home.toml"
+
+[Configuration.texture_map]
+path = "texture_map.png"
+textures=[
+    {name="water",rect={x=0,y=0,w=32,h=32}},
+    {name="sand",rect={x=32,y=0,w=32,h=32}},
+    {name="rock",rect={x=64,y=0,w=32,h=32}},
+    {name="grass",rect={x=96,y=0,w=32,h=32}},
+    {name="gravel",rect={x=128,y=0,w=32,h=32}},
+    {name="savanah",rect={x=160,y=0,w=32,h=32}},
+    {name="dirt",rect={x=192,y=0,w=32,h=32}},
+]
