@@ -44,6 +44,8 @@ use std::fmt::Display;
 use crate::game_reader::functions::{Vector3D, Vector2D, Vector4D};
 use std::{env, path::PathBuf};
 
+use super::toml_loader::TextureMap;
+
 //map of functions
 const SCENE_FUNCTIONS: &[(&str, fn(&Description, &mut Commands, Option<NodeBundle>, &Res<AssetServer>, Vec<Parameter>))] = &[
     ("spawn_ui", Description::spawn_ui),
@@ -58,11 +60,12 @@ pub struct Scene {
     pub name: String,
     pub description: Description,
     #[serde(skip_serializing, skip_deserializing)]
-    pub started: bool,
+    pub started: bool
 }
 
 impl Scene {
-    pub fn start(&mut self, commands: &mut Commands, asset_server: &Res<AssetServer>) {
+    pub fn start(&mut self, commands: &mut Commands, texture_map: TextureMap, asset_server: &Res<AssetServer>) {
+        self.description.texture_map = texture_map;
         self.description.start(commands, asset_server);
     }
     #[allow(dead_code)]
@@ -86,6 +89,8 @@ pub struct Description {
     #[serde(skip_serializing, skip_deserializing)]
     #[allow(dead_code)]
     pub results: Vec<Value>,
+    #[serde(skip_serializing, skip_deserializing)]
+    pub texture_map: TextureMap,
 }
 impl Description {
     fn parse_button(&self, params: Vec<Parameter>) -> Result<ButtonBundle,&str> {

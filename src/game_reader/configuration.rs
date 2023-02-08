@@ -89,9 +89,9 @@ fn setup(mut command: Commands, mut state: ResMut<GameState>, asset_server: Res<
             None
         }
     };
-    
+    let tex_map = state.configuration.as_mut().unwrap().texture_map.clone();
     if let Some(some) = &mut state.current_scene {
-        some.start(&mut command, &asset_server);
+        some.start(&mut command, tex_map, &asset_server);
     }
 }
 
