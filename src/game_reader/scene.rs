@@ -2,6 +2,7 @@ use bevy::{
     ecs::system::Res,
     prelude::{
         error,
+        ResMut,
         Commands,
         TextBundle,
         SpriteBundle,
@@ -37,6 +38,7 @@ use crate::{
             Value,
             Parameter
         },
+        configuration::ActionsState
     },
     ui::component::UIType
 };
@@ -47,7 +49,7 @@ use std::{env, path::PathBuf};
 use super::toml_loader::TextureMap;
 
 //map of functions
-const SCENE_FUNCTIONS: &[(&str, fn(&Description, &mut Commands, Option<NodeBundle>, &Res<AssetServer>, Vec<Parameter>))] = &[
+const SCENE_FUNCTIONS: &[(&str, fn(&Description, &mut Commands, Option<NodeBundle>, &mut ResMut<ActionsState>, &Res<AssetServer>, Vec<Parameter>))] = &[
     ("spawn_ui", Description::spawn_ui),
     ("create_node", Description::create_node),
     ("draw_texture", Description::draw_texture),
@@ -64,9 +66,9 @@ pub struct Scene {
 }
 
 impl Scene {
-    pub fn start(&mut self, commands: &mut Commands, texture_map: TextureMap, asset_server: &Res<AssetServer>) {
+    pub fn start(&mut self, commands: &mut Commands, state: &mut ResMut<ActionsState>, texture_map: TextureMap, asset_server: &Res<AssetServer>) {
         self.description.texture_map = texture_map;
-        self.description.start(commands, asset_server);
+        self.description.start(commands, state, asset_server);
     }
     #[allow(dead_code)]
     pub fn render(&mut self, commands: &mut Commands) {
@@ -179,7 +181,7 @@ impl Description {
         ))
     }
 
-    pub fn spawn_ui(&self, command: &mut Commands, node: Option<NodeBundle>, asset_server: &Res<AssetServer>, params: Vec<Parameter>) {
+    pub fn spawn_ui(&self, command: &mut Commands, node: Option<NodeBundle>, state: &mut ResMut<ActionsState>, asset_server: &Res<AssetServer>, params: Vec<Parameter>) {
         //spawns a UI component
         //first index is type
         if let Some(param1) = params.get(0){
@@ -192,6 +194,17 @@ impl Description {
                 return;
             }
             let tp = tp.unwrap();
+            if let Some(actions) = params.get(6){
+                let actions = match actions{
+                    Parameter::Actions(v) => v.clone(),
+                    _ => Vec::new(),
+                };
+                let text = match params.get(4).unwrap(){
+                    Parameter::Text(s) => s,
+                    _ => "",
+                };
+                state.module_actions.insert(text.into(), actions);
+            }
             match tp {
                 UIType::Button => {
                     //spawn button
@@ -246,7 +259,7 @@ impl Description {
         }
     }
 
-    pub fn create_node(&self, command: &mut Commands, _node: Option<NodeBundle>, asset_server: &Res<AssetServer>, params: Vec<Parameter>) {
+    pub fn create_node(&self, command: &mut Commands, _node: Option<NodeBundle>, state: &mut ResMut<ActionsState>, asset_server: &Res<AssetServer>, params: Vec<Parameter>) {
         //get id
         if params.get(0).is_none(){
             return;
@@ -290,12 +303,12 @@ impl Description {
             let name = action.name.clone();
             //check if function is in the map
             if let Some((_, func)) = SCENE_FUNCTIONS.iter().find(|(n,_)| n == &name){
-                func(self, command, Some(node.clone()), asset_server, params);
+                func(self, command, Some(node.clone()), state, asset_server, params);
             }
         }
     }
 
-    pub fn draw_texture(&self, command: &mut Commands, node: Option<NodeBundle>, asset_server: &Res<AssetServer>, params: Vec<Parameter>) {
+    pub fn draw_texture(&self, command: &mut Commands, node: Option<NodeBundle>, _: &mut ResMut<ActionsState>, asset_server: &Res<AssetServer>, params: Vec<Parameter>) {
         //texture
         if params.get(0).is_none(){
             return;
@@ -368,7 +381,7 @@ impl Description {
         }
     }
 
-    pub fn spawn_text(&self, command: &mut Commands, _node: Option<NodeBundle>, asset_server: &Res<AssetServer>, params: Vec<Parameter>) {
+    pub fn spawn_text(&self, command: &mut Commands, _node: Option<NodeBundle>, _: &mut ResMut<ActionsState>, asset_server: &Res<AssetServer>, params: Vec<Parameter>) {
         let res = self.parse_text(1, params.clone(), asset_server);
         if res.is_err(){
             let err = res.err().unwrap();
@@ -400,13 +413,13 @@ impl Description {
         command.spawn(text);
     }
 
-    fn start(&mut self, command: &mut Commands, asset_server: &Res<AssetServer>){
+    fn start(&mut self, command: &mut Commands, state: &mut ResMut<ActionsState>, asset_server: &Res<AssetServer>){
         for function in self.actions.clone() {
             let params = function.parameters.clone();
             let name = function.name.clone();
             //check if function is in the map
             if let Some((_, func)) = SCENE_FUNCTIONS.iter().find(|(n,_)| n == &name){
-                func(self, command, None, asset_server, params);
+                func(self, command, None, state, asset_server, params);
             }
         }
     }
