@@ -10,11 +10,30 @@ pub struct Vector2D {
     pub y: f64,
 }
 
+impl Default for Vector2D {
+    fn default() -> Self {
+        Vector2D {
+            x: 0.0,
+            y: 0.0
+        }
+    }
+}
+
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct Vector3D {
     pub x: f64,
     pub y: f64,
     pub z: f64,
+}
+
+impl Default for Vector3D {
+    fn default() -> Self {
+        Vector3D {
+            x: 0.0,
+            y: 0.0,
+            z: 0.0
+        }
+    }
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -23,6 +42,17 @@ pub struct Vector4D {
     pub y: f64,
     pub z: f64,
     pub w: f64,
+}
+
+impl Default for Vector4D {
+    fn default() -> Self {
+        Vector4D {
+            x: 0.0,
+            y: 0.0,
+            z: 0.0,
+            w: 0.0
+        }
+    }
 }
 
 #[derive(Clone, Debug)]

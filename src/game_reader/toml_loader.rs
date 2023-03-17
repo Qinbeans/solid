@@ -1,6 +1,7 @@
 use serde::{Serialize, Deserialize};
 use crate::game_reader::scene::Scene;
 
+
 #[derive(Deserialize, Serialize, Clone, Debug)]
 pub struct Rect {
     pub x: f32,
