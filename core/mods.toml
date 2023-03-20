@@ -1,7 +1,7 @@
 [Configuration]
 version = "0.1.0"
 # Change this to reflect the game
-checksum = "sha256:0b0b1c1b0b0b1c1b0b0b1c1b0b0b1c1b0b0b1c1b0b0b1c1b0b0b1c1b0b0b1c1b0"
+checksum = "checksum"
 entry = "home.toml"
 
 [Configuration.texture_map]

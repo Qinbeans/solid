@@ -1,13 +1,14 @@
 use ggegui::{Gui};
 use ggez::{event::EventHandler, graphics::{self, Color, DrawParam},glam};
 
-use crate::game_reader::{
+use crate::{game_reader::{
     scene::Scene,
     toml_loader::{Configuration},
-};
+}, integrity::Integrity};
 use std::path::Path;
 use super::toml_loader::TomlAsset;
 
+const COREDIR: &str = "core";
 const DATADIR: &str = "core/data";
 const MODFILE: &str = "core/mods.toml";
 
@@ -41,7 +42,7 @@ impl Game {
                 String::new()
             }
         };
-        let configuration = {
+        let mut configuration = {
             if let Ok(ok) = toml::from_str::<TomlAsset>(&file_string) {
                 match ok {
                     TomlAsset::Configuration(configuration) => Box::new(configuration),
@@ -51,6 +52,22 @@ impl Game {
                 panic!("Could not load configuration file!");
             }
         };
+        let core = if mode == "debug" {
+            Path::new(COREDIR).to_owned()
+        } else {
+            //get executable path
+            //get parent path
+            let mut pathbuf = std::env::current_exe().unwrap();
+            pathbuf.pop();
+            pathbuf.push(COREDIR);
+            let path = pathbuf.as_path().to_owned();
+            path
+        };
+        configuration.get_sum(core.clone());
+        let res = Integrity::new(configuration.sum.clone(), core).check();
+        if let Err(err) = res {
+            panic!("Integrity check failed: {}", err);
+        }
         let entry = configuration.entry.clone();
         let path = if mode == "debug" {
             let pathbuf = Path::new(DATADIR).join(entry);

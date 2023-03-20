@@ -36,6 +36,7 @@ impl Description {
         let mut position = Vector3D::default();
         let mut size = Vector2D::default();
         let mut color = Vector4D::default();
+        #[allow(unused_variables)]
         let mut font_size = 0.0;
         let mut functions:Vec<Function> = Vec::new();
         for parameter in parameters {
@@ -50,6 +51,7 @@ impl Description {
             }
         }
         let pos = Pos2::new(position.x as f32, position.y as f32);
+        #[allow(unused_variables)]
         let depth = position.z;
         let color32 = Color32::from_rgba_premultiplied((color.x * 255.0) as u8,(color.y * 255.0) as u8,(color.z * 255.0) as u8,(color.w * 255.0) as u8);
         let frame = Frame::default().fill(color32).inner_margin(Margin::same(5.0));
@@ -78,7 +80,7 @@ impl Description {
             });
         Ok(())
     }
-    fn spawn_ui(&self, ctx: &GuiContext, ui: Option<&mut Ui>, parameters: Vec<Parameter>) -> Result<(), String> {
+    fn spawn_ui(&self, _ctx: &GuiContext, ui: Option<&mut Ui>, parameters: Vec<Parameter>) -> Result<(), String> {
         if let Some(ui) = ui {
             let mut ui_name = String::new();
             let mut text = String::new();

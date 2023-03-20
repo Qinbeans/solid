@@ -13,3 +13,4 @@ ggegui = {git="https://github.com/Qinbeans/ggegui.git", branch="master"}
 image = {version="0.24.5", features=["png"]}
 serde = "1.0.156"
 toml = "0.7.3"
+sha2 = "0.10.6"

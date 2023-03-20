@@ -1,3 +1,5 @@
+use std::{path::PathBuf, io::read_to_string};
+
 use serde::{Serialize, Deserialize};
 use crate::game_reader::scene::Scene;
 
@@ -28,6 +30,25 @@ pub struct Configuration {
     pub checksum: String,
     pub entry: String,
     pub texture_map: TextureMap,
+    #[serde(skip)]
+    pub sum: String,
+}
+
+impl Configuration {
+    pub fn get_sum(&mut self, rel_path: PathBuf) {
+        //open checksum file
+        let file = std::fs::File::open(rel_path.join(&self.checksum));
+        if let Err(err) = file {
+            panic!("Could not open checksum file: {}", err);
+        }
+        let file = file.unwrap();
+        //read checksum file
+        let res = read_to_string(file);
+        if let Err(err) = res {
+            panic!("Could not read checksum file: {}", err);
+        }
+        self.sum = res.unwrap();
+    }
 }
 
 #[derive(Deserialize)]

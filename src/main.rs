@@ -9,6 +9,8 @@ const AUTHOR: &str = "Ryan Fong";
 const TITLE: &str = "Solid";
 const SIZE: (f32, f32) = (800.0, 600.0);
 
+mod integrity;
+
 fn main() {
     // Make a Context.
     let (mut ctx, event_loop) = ContextBuilder::new(TITLE, AUTHOR)
