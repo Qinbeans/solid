@@ -1,7 +1,7 @@
 use crate::game_reader::functions::Function;
 use egui::{Frame, Margin};
 use serde::{Deserialize, Serialize};
-use crate::egui::{egui::{self, Pos2, Vec2, Ui, WidgetText, RichText, Color32}, GuiContext};
+use ggegui::{egui::{self, Pos2, Ui, WidgetText, RichText, Color32}, GuiContext};
 use super::{functions::{Vector4D, Vector3D, Vector2D, Value, Parameter}, location::Location};
 
 #[derive(Serialize, Deserialize, Clone, Debug)]

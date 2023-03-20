@@ -1,4 +1,4 @@
-use crate::egui::{Gui};
+use ggegui::{Gui};
 use ggez::{event::EventHandler, graphics::{self, Color, DrawParam},glam};
 
 use crate::game_reader::{

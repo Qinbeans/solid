@@ -9,6 +9,7 @@ edition = "2021"
 egui = "0.21.0"
 egui_extras = {version="0.21.0", features=["image"]}
 ggez = "0.9.0-rc0"
+ggegui = {git="https://github.com/Qinbeans/ggegui.git", branch="master"}
 image = {version="0.24.5", features=["png"]}
 serde = "1.0.156"
 toml = "0.7.3"

@@ -2,8 +2,6 @@
 use ggez::event::{self};
 use ggez::{ContextBuilder};
 
-mod egui;
-
 mod game_reader;
 use game_reader::configuration::Game;
 
