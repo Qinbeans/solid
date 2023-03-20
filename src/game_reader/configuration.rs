@@ -20,10 +20,11 @@ pub struct Game {
 
 impl Game {
     pub fn new(ctx: &mut ggez::Context) -> Game {
-        let mode = match std::env::var("PROFILE"){
-            Ok(ok) => ok,
-            Err(_) => String::from("debug"),
-        };
+        #[cfg(debug_assertions)]
+        let mode = "debug";
+        #[cfg(not(debug_assertions))]
+        let mode = "release";
+        
         let path = if mode == "debug" {
             Path::new(MODFILE).to_owned()
         } else {

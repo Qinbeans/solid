@@ -41,9 +41,9 @@ impl Integrity {
             let entry = entry.unwrap();
             let path = entry.path();
             if path.is_dir() {
-                let res = self.rec_sum(path.to_owned());
+                let res = self.rec_sum(path);
                 if let Err(err) = res {
-                    return Err(format!("Could not read directory {:?} from res: {}", path, err));
+                    return Err(err);
                 }
                 sum.append(&mut res.unwrap());
             } else {
@@ -53,7 +53,7 @@ impl Integrity {
                 }
                 let res = self.file_sum(path);
                 if let Err(err) = res {
-                    return Err(format!("Could not read file from res: {}", err));
+                    return Err(err);
                 }
                 sum.append(&mut res.unwrap());
             }
@@ -83,9 +83,9 @@ impl Integrity {
             let entry = entry.unwrap();
             let path = entry.path();
             if path.is_dir() {
-                let res = self.rec_sum(path.to_owned());
+                let res = self.rec_sum(path);
                 if let Err(err) = res {
-                    return Err(format!("Could not read directory {:?} from res(rec_sum): {}", path, err));
+                    return Err(err);
                 }
                 sum.append(&mut res.unwrap());
             } else {
@@ -93,9 +93,9 @@ impl Integrity {
                 if IGNORES.contains(&path.file_name().unwrap().to_str().unwrap()) {
                     continue;
                 }
-                let res = self.file_sum(path.to_owned());
+                let res = self.file_sum(path);
                 if let Err(err) = res {
-                    return Err(format!("Could not read file {:?} from res(rec_sum): {}", path, err));
+                    return Err(err);
                 }
                 sum.append(&mut res.unwrap());
             }

@@ -15,3 +15,14 @@ textures=[
     {name="savanah",rect={x=160,y=0,w=32,h=32}},
     {name="dirt",rect={x=192,y=0,w=32,h=32}},
 ]
+
+[Configuration.game] # future settings that will be used to configure the game
+interaction_range = 2 # number of tiles away from the player for a player to interact with an object
+
+# default settings
+[Configuration.settings]
+# tiles for the viewport
+window_mode = "windowed"
+resolution = {w=1280,h=720}
+size = {w=500,h=400}
+keymap = {up="w",down="s",left="a",right="d",follow="cursor",interact="f",inventory="i",menu="escape",attack="mouse1",use="mouse2",map="m"}
