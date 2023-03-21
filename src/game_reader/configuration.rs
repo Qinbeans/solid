@@ -6,7 +6,7 @@ use crate::{game_reader::{
     toml_loader::{Configuration},
 }, integrity::Integrity};
 use std::path::Path;
-use super::toml_loader::TomlAsset;
+use super::{toml_loader::TomlAsset};
 
 const COREDIR: &str = "core";
 const DATADIR: &str = "core/data";
@@ -91,7 +91,7 @@ impl Game {
                 String::new()
             }
         };
-        let current_scene = {
+        let mut current_scene = {
             if let Ok(ok) = toml::from_str::<TomlAsset>(&file_string) {
                 match ok {
                     TomlAsset::Scene(scene) => Box::new(scene),
@@ -101,6 +101,7 @@ impl Game {
                 panic!("Could not load scene file!");
             }
         };
+        current_scene.init();
         Game {
             current_scene,
             configuration,
@@ -112,8 +113,47 @@ impl Game {
 impl EventHandler for Game {
     fn update(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult {
         //go through scene and update all entities
-        let gui_ctx = self.gui.ctx(); 
-        self.current_scene.description.update(&gui_ctx);
+        let gui_ctx = self.gui.ctx();
+        let res = self.current_scene.description.update(&gui_ctx);
+        if let Err(err) = res.to_owned() {
+            println!("{}", err);
+        }
+        let scene_name = res.unwrap();
+        if scene_name.len() > 0 {
+            let path = if cfg!(debug_assertions) {
+                let pathbuf = Path::new(DATADIR).join(scene_name);
+                pathbuf.as_path().to_owned()
+            } else {
+                //get executable path
+                //get parent path
+                let mut path = std::env::current_exe().unwrap();
+                path.pop();
+                path.push(DATADIR);
+                path.push(scene_name);
+                path.as_path().to_owned()
+            };
+            let file_string = {
+                if let Ok(ok) = std::fs::read_to_string(path) {
+                    ok
+                } else {
+                    String::new()
+                }
+            };
+            let mut current_scene = {
+                let res = toml::from_str::<TomlAsset>(&file_string);
+                if let Ok(ok) = res {
+                    match ok {
+                        TomlAsset::Scene(scene) => Box::new(scene),
+                        _ => panic!("Could not load scene file!"),
+                    }
+                } else {
+                    println!("{:?}", res.err().unwrap());
+                    panic!("Could not load scene file!");
+                }
+            };
+            current_scene.init();
+            self.current_scene = current_scene;
+        }
         self.gui.update(ctx);
         Ok(())
     }

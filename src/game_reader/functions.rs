@@ -20,6 +20,18 @@ impl Default for Vector2D {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct SubStat {
+    pub name: String,
+    pub value: f64,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct Stat {
+    pub name: String,
+    pub stats: Vec<SubStat>,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct Vector3D {
     pub x: f64,
     pub y: f64,
@@ -54,23 +66,23 @@ impl Default for Vector4D {
         }
     }
 }
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct Gender {
+    pub name: String,
+    pub pronouns: Vec<String>,
+}
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub enum Value {
-    #[allow(dead_code)]
     String(String),
-    #[allow(dead_code)]
     Float(f64),
-    #[allow(dead_code)]
     Int(i64),
-    #[allow(dead_code)]
     Function(Function),
-    #[allow(dead_code)]
     Vector2D(Vector2D),
-    #[allow(dead_code)]
     Vector3D(Vector3D),
-    #[allow(dead_code)]
-    Vector4D(Vector4D)
+    Vector4D(Vector4D),
+    Gender(Gender),
+    Stat(Stat),
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -96,7 +108,9 @@ pub enum Parameter {
     Boolean(bool),
     Max(i64),
     Min(i64),
-    Default(Value)
+    Default(Value),
+    Placeholder(String),
+    Options(Vec<Value>),
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]

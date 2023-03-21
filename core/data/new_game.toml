@@ -37,7 +37,7 @@ Scene = {name = "New Game", description = {background = {x=0,y=0,z=0,w=0}, locat
                         {Text="What is your gender?"}, # text to display
                         {Id="player.gender"},
                         # Vec<Value>
-                        {Placeholder=[{name="male",pronouns=["he","him","his"]},{name="female",pronouns=["she","her","hers"]}]},
+                        {Options=[{Gender={name="male",pronouns=["he","him","his"]}},{Gender={name="female",pronouns=["she","her","hers"]}}]},
                         {Default={Int=0}},
                         {Actions=[
                             {name="store", parameters=[
@@ -50,8 +50,8 @@ Scene = {name = "New Game", description = {background = {x=0,y=0,z=0,w=0}, locat
                         {Text="What race would you like to be?"},
                         {Id="player.race"},
                         # Vec<Value>
-                        {Placeholder=[
-                            {name="human",stats=[
+                        {Options=[
+                            {Stat={name="human",stats=[
                                 # damage output
                                 {name="strength",value=10},
                                 # crafting success rate
@@ -64,23 +64,23 @@ Scene = {name = "New Game", description = {background = {x=0,y=0,z=0,w=0}, locat
                                 {name="mana",value=10},
                                 # magic damage output
                                 {name="wisdom",value=10},
-                            ]},
-                            {name="elf",stats=[
+                            ]}},
+                            {Stat={name="elf",stats=[
                                 {name="strength",value=8},
                                 {name="dexterity",value=8},
                                 {name="health",value=8},
                                 {name="intelligence",value=12},
                                 {name="mana",value=12},
                                 {name="wisdom",value=12},
-                            ]},
-                            {name="dwarf",stats=[
+                            ]}},
+                            {Stat={name="dwarf",stats=[
                                 {name="strength",value=12},
                                 {name="dexterity",value=12},
                                 {name="health",value=12},
                                 {name="intelligence",value=8},
                                 {name="mana",value=8},
                                 {name="wisdom",value=8},
-                            ]},
+                            ]}},
                         ]},
                         {Default={Int=0}},
                         {Actions=[
@@ -94,9 +94,9 @@ Scene = {name = "New Game", description = {background = {x=0,y=0,z=0,w=0}, locat
                         {Text="What class would you like to be?"},
                         {Id="player.class"},
                         # Vec<Value>
-                        {Placeholder=[
+                        {Options=[
                             # I'm thinking tank class
-                            {name="warrior",stats=[
+                            {Stat={name="warrior",stats=[
                                 # damage output
                                 {name="strength",value=20},
                                 # crafting success rate / general speed
@@ -109,23 +109,23 @@ Scene = {name = "New Game", description = {background = {x=0,y=0,z=0,w=0}, locat
                                 {name="mana",value=2},
                                 # magic damage output
                                 {name="wisdom",value=3},
-                            ]},
-                            {name="mage",stats=[
+                            ]}},
+                            {Stat={name="mage",stats=[
                                 {name="strength",value=2},
                                 {name="dexterity",value=10},
                                 {name="health",value=3},
                                 {name="intelligence",value=15},
                                 {name="mana",value=15},
                                 {name="wisdom",value=15},
-                            ]},
-                            {name="rogue",stats=[
+                            ]}},
+                            {Stat={name="rogue",stats=[
                                 {name="strength",value=15},
                                 {name="dexterity",value=25},
                                 {name="health",value=12},
                                 {name="intelligence",value=3},
                                 {name="mana",value=2},
                                 {name="wisdom",value=3},
-                            ]},
+                            ]}},
                         ]},
                         {Default={Int=0}},
                         {Actions=[

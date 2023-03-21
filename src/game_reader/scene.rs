@@ -1,8 +1,8 @@
-use crate::game_reader::functions::Function;
+use std::{collections::HashMap};
 use egui::{Frame, Margin};
 use serde::{Deserialize, Serialize};
 use ggegui::{egui::{self, Pos2, Ui, WidgetText, RichText, Color32}, GuiContext};
-use super::{functions::{Vector4D, Vector3D, Vector2D, Value, Parameter}, location::Location};
+use super::{functions::{Vector4D, Vector3D, Vector2D, Value, Parameter, Function}, location::Location};
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct Description {
@@ -12,16 +12,18 @@ pub struct Description {
     pub actions: Vec<Function>,
     #[serde(skip_serializing, skip_deserializing)]
     #[allow(dead_code)]
-    pub results: Vec<Value>,
+    pub vars: Box<HashMap<String,Value>>,
 }
 
 impl Description {
-    pub fn update(&mut self, ctx: &GuiContext) {
-        for action in self.actions.iter() {
+    pub fn update(&mut self, ctx: &GuiContext) -> Result<String, String> {
+        let actions = self.actions.clone();
+        for action in actions.iter() {
             //execute functions from scene_functions
             match action.name.as_str() {
                 "spawn_window" => {
-                    if let Err(e) = self.spawn_window(ctx, None, action.parameters.clone()) {
+                    let res = self.spawn_window(ctx, None, action.parameters.clone());
+                    if let Err(e) = res.to_owned() {
                         println!("{}", e);
                     }
                 }
@@ -30,8 +32,14 @@ impl Description {
                 }
             }
         }
+        if self.vars.get("scene_name").is_some() {
+            if let Value::String(s) = self.vars.get("scene_name").unwrap() {
+                return Ok(s.to_string());
+            }
+        }
+        Ok("".to_string())
     }
-    fn spawn_window(&self, ctx: &GuiContext, _: Option<&mut Ui>, parameters: Vec<Parameter>) -> Result<(), String> {
+    fn spawn_window(&mut self, ctx: &GuiContext, _: Option<&mut Ui>, parameters: Vec<Parameter>) -> Result<(), String> {
         let mut text = String::new();
         let mut position = Vector3D::default();
         let mut size = Vector2D::default();
@@ -65,10 +73,12 @@ impl Description {
             .current_pos(pos)
             .frame(frame)
             .show(ctx, move |ui| {
-                for function in functions.iter() {
-                    match function.name.as_str() {
+                for action in functions.iter() {
+                    //execute functions from scene_functions
+                    match action.name.as_str() {
                         "spawn_ui" => {
-                            if let Err(e) = self.spawn_ui(ctx, Some(ui), function.parameters.clone()) {
+                            let res = self.spawn_ui(ctx, Some(ui), action.parameters.clone());
+                            if let Err(e) = res.to_owned() {
                                 println!("{}", e);
                             }
                         }
@@ -80,7 +90,7 @@ impl Description {
             });
         Ok(())
     }
-    fn spawn_ui(&self, _ctx: &GuiContext, ui: Option<&mut Ui>, parameters: Vec<Parameter>) -> Result<(), String> {
+    fn spawn_ui(&mut self, _ctx: &GuiContext, ui: Option<&mut Ui>, parameters: Vec<Parameter>) -> Result<(), String> {
         if let Some(ui) = ui {
             let mut ui_name = String::new();
             let mut text = String::new();
@@ -112,6 +122,19 @@ impl Description {
                                 "exit" => {
                                     std::process::exit(0);
                                 }
+                                "load_scene" => {
+                                    //get scene name
+                                    for parameter in function.parameters.iter() {
+                                        match parameter {
+                                            Parameter::Scene(s) => {
+                                                self.vars.insert("scene_name".to_string(), Value::String(s.to_string()));
+                                            }
+                                            _ => {
+                                                return Err("Could not load scene".to_string());
+                                            }
+                                        }
+                                    }
+                                }
                                 _ => {
                                     println!("Unknown function");
                                 }
@@ -125,7 +148,9 @@ impl Description {
         }
         Err(String::from("No UI found"))
     }
-
+    fn init(&mut self) {
+        self.vars = Box::new(HashMap::new());
+    }
 }
 
 #[derive(Serialize, Deserialize)]
@@ -134,6 +159,13 @@ pub struct Scene {
     pub description: Description,
     #[serde(skip)]
     pub started: bool,
+}
+
+impl Scene {
+    pub fn init(&mut self) {
+        self.started = false;
+        self.description.init();
+    }
 }
 
 impl Clone for Scene {
