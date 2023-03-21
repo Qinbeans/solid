@@ -55,7 +55,7 @@ impl Default for Vector4D {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub enum Value {
     #[allow(dead_code)]
     String(String),
@@ -91,6 +91,12 @@ pub enum Parameter {
     Vector4D(Vector4D),
     Scene(String),
     Texture(String),
+    Int(i64),
+    Float(f64),
+    Boolean(bool),
+    Max(i64),
+    Min(i64),
+    Default(Value)
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]

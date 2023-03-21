@@ -45,7 +45,8 @@ pub struct KeyMap {
     pub inventory: String,
     pub menu: String,
     pub attack: String,
-    pub use_: String,
+    #[serde(rename = "use")]
+    pub utilize: String,
     pub map: String,
 }
 

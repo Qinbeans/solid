@@ -44,12 +44,14 @@ impl Game {
             }
         };
         let mut configuration = {
-            if let Ok(ok) = toml::from_str::<TomlAsset>(&file_string) {
+            let toml = toml::from_str::<TomlAsset>(&file_string);
+            if let Ok(ok) = toml {
                 match ok {
                     TomlAsset::Configuration(configuration) => Box::new(configuration),
                     _ => panic!("Could not load configuration file!"),
                 }
             } else {
+                println!("{}", toml.err().unwrap());
                 panic!("Could not load configuration file!");
             }
         };
