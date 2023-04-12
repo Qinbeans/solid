@@ -27,6 +27,12 @@ impl Description {
                         println!("{}", e);
                     }
                 }
+                "new_game" => {
+                    let res = self.spawn_window(ctx, None, action.parameters.clone());
+                    if let Err(e) = res.to_owned() {
+                        println!("{}", e);
+                    }
+                }
                 _ => {
                     println!("Unknown function");
                 }
@@ -38,6 +44,62 @@ impl Description {
             }
         }
         Ok("".to_string())
+    }
+    fn new_game(&mut self, ctx: &GuiContext, _: Option<&mut Ui>, parameters: Vec<Parameter>) -> Result<(), String> {
+        let mut text = String::new();
+        let mut position = Vector3D::default();
+        let mut size = Vector2D::default();
+        let mut color = Vector4D::default();
+        #[allow(unused_variables)]
+        let mut font_size = 0.0;
+        let mut functions:Vec<Function> = Vec::new();
+        for parameter in parameters {
+            match parameter {
+                Parameter::String(s) => text = s,
+                Parameter::Position(v) => position = v,
+                Parameter::Vector2D(v) => size = v,
+                Parameter::Color(v) => color = v,
+                Parameter::Font(f) => font_size = f,
+                Parameter::Actions(a) => functions = a,
+                _ => {}
+            }
+        }
+        //if vars["page_location"] is not set, set it to 1
+        if self.vars.get("$page_location").is_none() {
+            self.vars.insert("$page_location".to_string(), Value::Int(1));
+        }
+
+        let pos = Pos2::new(position.x as f32, position.y as f32);
+        #[allow(unused_variables)]
+        let depth = position.z;
+        let color32 = Color32::from_rgba_premultiplied((color.x * 255.0) as u8,(color.y * 255.0) as u8,(color.z * 255.0) as u8,(color.w * 255.0) as u8);
+        let frame = Frame::default().fill(color32).inner_margin(Margin::same(5.0));
+        egui::Window::new(text)
+            .collapsible(false)
+            .title_bar(false)
+            .resizable(false)
+            .movable(false)
+            .min_width(size.x as f32)
+            .min_height(size.y as f32)
+            .current_pos(pos)
+            .frame(frame)
+            .show(ctx, move |ui| {
+                for action in functions.iter() {
+                    //execute functions from scene_functions
+                    match action.name.as_str() {
+                        "spawn_ui" => {
+                            let res = self.spawn_ui(ctx, Some(ui), action.parameters.clone());
+                            if let Err(e) = res.to_owned() {
+                                println!("{}", e);
+                            }
+                        }
+                        _ => {
+                            println!("Unknown function");
+                        }
+                    }
+                }
+            });
+        Ok(())
     }
     fn spawn_window(&mut self, ctx: &GuiContext, _: Option<&mut Ui>, parameters: Vec<Parameter>) -> Result<(), String> {
         let mut text = String::new();

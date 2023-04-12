@@ -2,18 +2,38 @@
 version = "0.1.0"
 # Change this to reflect the game
 checksum = "checksum"
-entry = "home.toml"
 
+# Effectively instructing the game to load the texture map into memory
 [Configuration.texture_map]
 path = "texture_map.png"
 textures=[
-    {name="water",rect={x=0,y=0,w=32,h=32}},
-    {name="sand",rect={x=32,y=0,w=32,h=32}},
-    {name="rock",rect={x=64,y=0,w=32,h=32}},
-    {name="grass",rect={x=96,y=0,w=32,h=32}},
-    {name="gravel",rect={x=128,y=0,w=32,h=32}},
-    {name="savanah",rect={x=160,y=0,w=32,h=32}},
-    {name="dirt",rect={x=192,y=0,w=32,h=32}},
+    # Row 1: tiles
+    {id="tile.water",rect={x=0,y=0,w=32,h=32}},
+    {id="tile.sand",rect={x=32,y=0,w=32,h=32}},
+    {id="tile.rock",rect={x=64,y=0,w=32,h=32}},
+    {id="tile.grass",rect={x=96,y=0,w=32,h=32}},
+    {id="tile.gravel",rect={x=128,y=0,w=32,h=32}},
+    {id="tile.savanah",rect={x=160,y=0,w=32,h=32}},
+    {id="tile.dirt",rect={x=192,y=0,w=32,h=32}},
+    # Row 2: items
+    {name="item.elixir.health",rect={x=0,y=32,w=32,h=32}},
+    # break the tile into 4 parts 16x16 pixels
+    {name="item.apparel.leather_cap",rect={x=32,y=32,w=32,h=32}},
+    {name="item.apparel.leather_armor",rect={x=64,y=32,w=32,h=32}},
+    {name="item.apparel.leather_pants",rect={x=96,y=32,w=32,h=32}},
+    {name="item.apparel.leather_boots",rect={x=128,y=32,w=32,h=32}},
+    {name="item.apparel.leather_gloves",rect={x=160,y=32,w=32,h=32}},
+    # break the tile into 2 parts 16x16 pixels
+    {name="item.weapon.rusty_dagger",rect={x=192,y=32,w=16,h=16}},
+    {name="item.weapon.excalibur",rect={x=208,y=32,w=16,h=16}},
+    {name="item.misc.coin",rect={x=192,y=48,w=16,h=16}},
+    # Row 4 - 6: races -> front, left, right, back
+    # break the tile into 4 parts 16x16 pixels
+    {id="race.human",rect={x=0,y=64,w=32,h=32}},
+    {id="race.elf",rect={x=32,y=64,w=32,h=32}},
+    {id="race.demon",rect={x=64,y=64,w=32,h=32}},
+    {id="race.angel",rect={x=128,y=64,w=32,h=32}},
+    {id="race.beastman",rect={x=160,y=64,w=32,h=32}}
 ]
 
 [Configuration.game] # future settings that will be used to configure the game

@@ -1,0 +1,7 @@
+Locations = [
+    # find a certain area matching description
+    # texture is the texture id we want to look for
+    # size is the size of the area we want to look for
+    # radius is the spawn radius around the center of the searched box
+    { id = "location.spawn.zombie", name = "Zombie Spawn", texture = "tile.grass", size = { w = 4, h = 4 }, radius = 10, description = "Zombie Spawn" },
+]

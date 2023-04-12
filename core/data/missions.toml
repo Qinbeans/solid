@@ -1,0 +1,3 @@
+Missions = [
+    { id = "mission.hunt.zombies", name = "Zombie Hunt", location = "location.spawn.zombie", goal = { hunt = { number = 10, count = 0 } }, trigger = "spawn" }
+]

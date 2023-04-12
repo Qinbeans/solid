@@ -1,0 +1,55 @@
+# stats
+# str = strength     -> Physical damage modifier            -> Base: 15
+# agi = agility      -> Movement and attack speed modifier  -> Base: 15
+# dex = dexterity    -> Crafting and skill buff modifier    -> Base: 15
+# int = intelligence -> Casting speed and mana modifier     -> Base: 15
+# luk = luck         -> Loot chance                         -> Base: 15
+# vit = vitality     -> Health modifier                     -> Base: 15
+# def = defense      -> damage reduction                    -> Base: 15
+
+# affinity(hardcoded)
+# none       = -1
+# fire       = 0
+# water      = 1
+# earth      = 2
+# air        = 3
+# light      = 4
+# dark       = 5
+# lightening = 6
+
+[Character]
+# file path to store character data
+store = "$CONFIG$/character.toml"
+race = "race.human"
+class = "class.warrior"
+name = "default"
+level = 1
+exp = 0
+affinity = -1
+
+[Character.stats]
+str = 15
+agi = 15
+dex = 15
+int = 15
+luk = 15
+vit = 15
+def = 15
+
+[Character.inventory]
+size = {w=10,h=10}
+# in case we want to add stuff to the inventory
+data = []
+# items refers to the item id
+apparel = [
+    {name="head",item=""},
+    {name="body",item=""},
+    {name="legs",item=""},
+    {name="feet",item=""},
+    {name="hands",item=""},
+    {name="accessory",item=""},
+]
+holding = [
+    {name="left",item="item.weapon.rusty_dagger"},
+    {name="right",item=""},
+]
