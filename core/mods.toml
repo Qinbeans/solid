@@ -6,6 +6,7 @@ checksum = "checksum"
 # Effectively instructing the game to load the texture map into memory
 [Configuration.texture_map]
 path = "texture_map.png"
+tiles = ["tile.water", "tile.sand", "tile.rock", "tile.grass", "tile.gravel", "tile.savanah", "tile.dirt"]
 textures=[
     # Row 1: tiles
     {id="tile.water",rect={x=0,y=0,w=32,h=32}},
@@ -16,17 +17,17 @@ textures=[
     {id="tile.savanah",rect={x=160,y=0,w=32,h=32}},
     {id="tile.dirt",rect={x=192,y=0,w=32,h=32}},
     # Row 2: items
-    {name="item.elixir.health",rect={x=0,y=32,w=32,h=32}},
+    {id="item.elixir.health",rect={x=0,y=32,w=32,h=32}},
     # break the tile into 4 parts 16x16 pixels
-    {name="item.apparel.leather_cap",rect={x=32,y=32,w=32,h=32}},
-    {name="item.apparel.leather_armor",rect={x=64,y=32,w=32,h=32}},
-    {name="item.apparel.leather_pants",rect={x=96,y=32,w=32,h=32}},
-    {name="item.apparel.leather_boots",rect={x=128,y=32,w=32,h=32}},
-    {name="item.apparel.leather_gloves",rect={x=160,y=32,w=32,h=32}},
+    {id="item.apparel.leather_cap",rect={x=32,y=32,w=32,h=32}},
+    {id="item.apparel.leather_armor",rect={x=64,y=32,w=32,h=32}},
+    {id="item.apparel.leather_pants",rect={x=96,y=32,w=32,h=32}},
+    {id="item.apparel.leather_boots",rect={x=128,y=32,w=32,h=32}},
+    {id="item.apparel.leather_gloves",rect={x=160,y=32,w=32,h=32}},
     # break the tile into 2 parts 16x16 pixels
-    {name="item.weapon.rusty_dagger",rect={x=192,y=32,w=16,h=16}},
-    {name="item.weapon.excalibur",rect={x=208,y=32,w=16,h=16}},
-    {name="item.misc.coin",rect={x=192,y=48,w=16,h=16}},
+    {id="item.weapon.rusty_dagger",rect={x=192,y=32,w=16,h=16}},
+    {id="item.weapon.excalibur",rect={x=208,y=32,w=16,h=16}},
+    {id="item.misc.coin",rect={x=192,y=48,w=16,h=16}},
     # Row 4 - 6: races -> front, left, right, back
     # break the tile into 4 parts 16x16 pixels
     {id="race.human",rect={x=0,y=64,w=32,h=32}},
@@ -35,9 +36,6 @@ textures=[
     {id="race.angel",rect={x=128,y=64,w=32,h=32}},
     {id="race.beastman",rect={x=160,y=64,w=32,h=32}}
 ]
-
-[Configuration.game] # future settings that will be used to configure the game
-interaction_range = 2 # number of tiles away from the player for a player to interact with an object
 
 # default settings
 [Configuration.settings]

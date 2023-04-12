@@ -2,18 +2,17 @@ use ggegui::{Gui};
 use ggez::{event::EventHandler, graphics::{self, Color, DrawParam},glam};
 
 use crate::{game_reader::{
-    scene::Scene,
     toml_loader::{Configuration},
 }, integrity::Integrity};
 use std::path::Path;
-use super::{toml_loader::TomlAsset};
+use super::{toml_loader::TomlAsset,scene::Scene};
 
 const COREDIR: &str = "core";
-const DATADIR: &str = "core/data";
 const MODFILE: &str = "core/mods.toml";
+const BG_COLOR: Color = Color::new(0.0, 0.0, 0.0, 1.0);
 
 pub struct Game {
-    pub current_scene: Box<Scene>,
+    pub data: Box<Scene>,
     pub configuration: Box<Configuration>,
     pub gui: Gui,
 }
@@ -71,39 +70,9 @@ impl Game {
         if let Err(err) = res {
             panic!("Integrity check failed: {}", err);
         }
-        let entry = configuration.entry.clone();
-        let path = if mode == "debug" {
-            let pathbuf = Path::new(DATADIR).join(entry);
-            pathbuf.as_path().to_owned()
-        } else {
-            //get executable path
-            //get parent path
-            let mut path = std::env::current_exe().unwrap();
-            path.pop();
-            path.push(DATADIR);
-            path.push(entry);
-            path.as_path().to_owned()
-        };
-        file_string = {
-            if let Ok(ok) = std::fs::read_to_string(path) {
-                ok
-            } else {
-                String::new()
-            }
-        };
-        let mut current_scene = {
-            if let Ok(ok) = toml::from_str::<TomlAsset>(&file_string) {
-                match ok {
-                    TomlAsset::Scene(scene) => Box::new(scene),
-                    _ => panic!("Could not load scene file!"),
-                }
-            } else {
-                panic!("Could not load scene file!");
-            }
-        };
-        current_scene.init();
+        configuration.map_textures();
         Game {
-            current_scene,
+            data: Box::new(Scene::new(*(configuration.clone()))),
             configuration,
             gui: Gui::new(ctx),
         }
@@ -114,54 +83,12 @@ impl EventHandler for Game {
     fn update(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult {
         //go through scene and update all entities
         let gui_ctx = self.gui.ctx();
-        let res = self.current_scene.description.update(&gui_ctx);
-        if let Err(err) = res.to_owned() {
-            println!("{}", err);
-        }
-        let scene_name = res.unwrap();
-        if scene_name.len() > 0 {
-            let path = if cfg!(debug_assertions) {
-                let pathbuf = Path::new(DATADIR).join(scene_name);
-                pathbuf.as_path().to_owned()
-            } else {
-                //get executable path
-                //get parent path
-                let mut path = std::env::current_exe().unwrap();
-                path.pop();
-                path.push(DATADIR);
-                path.push(scene_name);
-                path.as_path().to_owned()
-            };
-            let file_string = {
-                if let Ok(ok) = std::fs::read_to_string(path) {
-                    ok
-                } else {
-                    String::new()
-                }
-            };
-            let mut current_scene = {
-                let res = toml::from_str::<TomlAsset>(&file_string);
-                if let Ok(ok) = res {
-                    match ok {
-                        TomlAsset::Scene(scene) => Box::new(scene),
-                        _ => panic!("Could not load scene file!"),
-                    }
-                } else {
-                    println!("{:?}", res.err().unwrap());
-                    panic!("Could not load scene file!");
-                }
-            };
-            current_scene.init();
-            self.current_scene = current_scene;
-        }
         self.gui.update(ctx);
         Ok(())
     }
 
     fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult {
-        let bg_color = self.current_scene.description.background.clone();
-        let bg_color = Color::new(bg_color.x as f32, bg_color.y as f32, bg_color.z as f32, bg_color.w as f32);
-        let mut canvas = graphics::Canvas::from_frame(ctx, bg_color);
+        let mut canvas = graphics::Canvas::from_frame(ctx, BG_COLOR);
         canvas.draw(&self.gui, DrawParam::default().dest(glam::Vec2::ZERO));
         canvas.finish(ctx)
     }

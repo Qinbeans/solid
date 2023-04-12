@@ -15,7 +15,7 @@
 # air        = 3
 # light      = 4
 # dark       = 5
-# lightening = 6
+# lightning = 6
 
 [Character]
 # file path to store character data
@@ -35,6 +35,7 @@ int = 15
 luk = 15
 vit = 15
 def = 15
+rng = 1
 
 [Character.inventory]
 size = {w=10,h=10}

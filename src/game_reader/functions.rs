@@ -2,6 +2,8 @@
 //https://docs.rs/noise/latest/noise/
 use serde::{Deserialize, Serialize};
 
+use super::toml_loader::Size;
+
 //store results into a vector
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -17,18 +19,6 @@ impl Default for Vector2D {
             y: 0.0
         }
     }
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug)]
-pub struct SubStat {
-    pub name: String,
-    pub value: f64,
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug)]
-pub struct Stat {
-    pub name: String,
-    pub stats: Vec<SubStat>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -66,10 +56,33 @@ impl Default for Vector4D {
         }
     }
 }
-#[derive(Serialize, Deserialize, Clone, Debug)]
-pub struct Gender {
-    pub name: String,
-    pub pronouns: Vec<String>,
+
+//use templating
+pub struct Vector4T<T> {
+    pub x: T,
+    pub y: T,
+    pub z: T,
+    pub w: T,
+}
+
+impl <T> Vector4T<T> {
+    pub fn new(x: T, y: T, z: T, w: T) -> Self {
+        Vector4T {
+            x,
+            y,
+            z,
+            w,
+        }
+    }
+}
+
+impl Vector4T<u32> {
+    pub fn size(&self) -> Size {
+        Size {
+            w: self.x - self.z,
+            h: self.y - self.w,
+        }
+    }
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -81,8 +94,6 @@ pub enum Value {
     Vector2D(Vector2D),
     Vector3D(Vector3D),
     Vector4D(Vector4D),
-    Gender(Gender),
-    Stat(Stat),
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
