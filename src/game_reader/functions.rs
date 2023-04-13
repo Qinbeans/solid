@@ -57,7 +57,7 @@ impl Default for Vector4D {
     }
 }
 
-//use templating
+#[derive(Clone, Debug)]
 pub struct Vector4T<T> {
     pub x: T,
     pub y: T,
@@ -81,6 +81,22 @@ impl Vector4T<u32> {
         Size {
             w: self.z - self.x,
             h: self.w - self.y,
+        }
+    }
+}
+//allow adding vectors
+impl <T> std::ops::Add for Vector4T<T>
+where
+    T: std::ops::Add<Output = T> + Copy,
+{
+    type Output = Self;
+
+    fn add(self, other: Self) -> Self {
+        Vector4T {
+            x: self.x + other.x,
+            y: self.y + other.y,
+            z: self.z + other.z,
+            w: self.w + other.w,
         }
     }
 }

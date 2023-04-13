@@ -17,7 +17,7 @@ pub enum Entity {
     Mob(mob::Mob),
 }
 
-#[derive(Deserialize, Serialize, Clone)]
+#[derive(Deserialize, Serialize, Clone, Debug)]
 pub struct Stats {
     #[serde(rename = "str")]
     pub stg: i32,
@@ -70,7 +70,7 @@ impl Default for Inventory {
     }
 }
 
-#[derive(Deserialize, Serialize, Clone)]
+#[derive(Deserialize, Serialize, Clone, Debug)]
 pub enum Affinity {
     None = -1,
     Fire = 0,

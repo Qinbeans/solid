@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-#[derive(Deserialize, Serialize, Clone)]
+#[derive(Deserialize, Serialize, Clone, Debug)]
 pub enum Trigger {
     None = -1,
     Use = 0,
@@ -9,7 +9,7 @@ pub enum Trigger {
     Proximity = 3,
 }
 
-#[derive(Deserialize, Serialize, Clone)]
+#[derive(Deserialize, Serialize, Clone, Debug)]
 pub struct Effect {
     pub id: String,
     pub name: String,

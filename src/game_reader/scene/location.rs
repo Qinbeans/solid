@@ -7,7 +7,7 @@ use super::entity::Entity;
 //slightly different from data::location::Spawn is that Entity refers
 // to the scene::entity::Entity--this entity contains more memory
 // oriented data
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct Spawn {
     pub entity: Entity,
     pub trigger: Trigger,
@@ -30,7 +30,7 @@ impl Spawn {
     }
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct Location {
     pub id: String,
     pub name: String,

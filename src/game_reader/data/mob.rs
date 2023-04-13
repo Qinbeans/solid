@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 
 use super::{Stats, Affinity};
 
-#[derive(Deserialize, Serialize, Clone)]
+#[derive(Deserialize, Serialize, Clone, Debug)]
 pub struct Range {
     pub min: i32,
     pub max: i32,

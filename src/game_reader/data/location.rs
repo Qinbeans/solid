@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::game_reader::toml_loader::Size;
 
-#[derive(Deserialize, Serialize, Clone)]
+#[derive(Deserialize, Serialize, Clone, Debug)]
 pub enum Trigger {
     OnEnter(i32),
     Proximity(f32),

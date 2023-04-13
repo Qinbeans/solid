@@ -3,18 +3,20 @@ pub mod entity;
 
 use std::collections::HashMap;
 
+use crate::game_reader::logger::error;
+
 use self::entity::{Character};
 
-use super::{toml_loader::{Size, TomlAsset, Configuration}, data, functions::{Vector4T, Vector2D}};
+use super::{logger,toml_loader::{Size, TomlAsset, Configuration}, data, functions::{Vector4T, Vector2D}};
 use noise::{Fbm, Perlin};
 use noise::utils::{NoiseMapBuilder, PlaneMapBuilder};
-use serde::{Serialize};
+use serde::{Serialize, Deserialize};
 use location::Location;
 use rand::Rng;
 
 const DATADIR: &str = "core/data";
 
-#[derive(Serialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct Scene {
     pub map: Option<Map>,
 }
@@ -211,7 +213,7 @@ impl Default for Scene {
     }
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct Map {
     //includes locations, items, mobs, effects
     pub locations: HashMap<String, Location>,
@@ -232,38 +234,49 @@ impl Map {
         map.missions = mission_map.clone();
         //create a perlin noise map
         let fbm = Fbm::<Perlin>::new(0);
-        let raw_map: Vec<i32> = PlaneMapBuilder::<_, 2>::new(&fbm)
+        let raw_map = PlaneMapBuilder::<_, 2>::new(&fbm)
           .set_size(map.size.w as usize, map.size.h as usize)
-          .set_x_bounds(-5.0, 5.0)
-          .set_y_bounds(-5.0, 5.0)
-          .build()
-          .iter()
-          .map(|&x| (((x + 2.0) * 10.0) as i32) % configs.texture_map.tiles.len() as i32 )
-          .collect();
-
+          .set_x_bounds(0.0, 1.0)
+          .set_y_bounds(0.0, 1.0)
+          .build();
         //find groupings of similar values using a hashmap of vectors
         let mut groups: HashMap<String, Vec<Vector4T<u32>>> = HashMap::new();
+        //group neighbors by adding the vectors together
+        //add tiles with similar values to the same group
         for y in 0..map.size.h {
             for x in 0..map.size.w {
-                let index = (y * map.size.w + x) as usize;
-                let value = raw_map[index];
-                let key = if let Some(val) = configs.texture_map.tiles.get(value as usize) {
+                //can get value from map use get_value
+                let value = ((raw_map.get_value(x as usize, y as usize) + 2.0) * 10.0) as u32 % configs.texture_map.tiles.len() as u32;
+                let group_name = if let Some(val) = configs.texture_map.tiles.get(value as usize) {
                     val.clone()
                 } else {
-                    println!("Could not find tile for value: {}", value);
-                    "grass".to_string()
+                    error!("Could not find tile for value: {}", value);
+                    "tile.grass".to_string()
                 };
-                let group = groups.entry(key).or_insert(Vec::new());
-                //increase the size of the last group if it is adjacent to the current tile
-                if let Some(last) = group.last_mut() {
-                    if last.z == x && last.w == y {
-                        last.z += 1;
-                        last.w += 1;
-                    } else {
+                //check if the group exists
+                if let Some(group) = groups.get_mut(&group_name) {
+                    //check if the current tile is a neighbor of the last tile in the group
+                    //if it is, add the last vector4t to the current vector4t
+                    //else, add the current vector4t to the group
+                    //go through the group and check if the current tile is a neighbor of any of the tiles in the group
+                    let mut neighbor = false;
+                    for tile in group.iter_mut() {
+                        if (x == tile.x || x == tile.z) && (y == tile.y || y == tile.w) {
+                            neighbor = true;
+                            if x == tile.z {
+                                tile.z += 1;
+                            }
+                            if y == tile.w {
+                                tile.w += 1;
+                            }
+                        }
+                    }
+                    if !neighbor {
                         group.push(Vector4T::new(x, y, x + 1, y + 1));
                     }
                 } else {
-                    group.push(Vector4T::new(x, y, x + 1, y + 1));
+                    //if it doesn't, create a new group and add the current tile to it
+                    groups.insert(group_name.clone(), vec![Vector4T::new(x, y, x + 1, y + 1)]);
                 }
             }
         }
@@ -293,9 +306,13 @@ impl Map {
             let required_size = loc.size.clone();
             //check if any of the groups are large enough to fit the location
             for (_, area) in loc_groups.iter().enumerate() {
-                if area.size() > required_size {
+                if area.size() >= required_size {
                     //choose somewhere in the group to place the location
                     //subtract the required size from the group size to prevent the location from going off the map
+                    if area.z-required_size.w < area.x || area.w-required_size.h < area.y {
+                        error!("Location {} is too large for the tile", loc.id);
+                        return false;
+                    }
                     let x = rng.gen_range(area.x..area.z-required_size.w) as f64;
                     let y = rng.gen_range(area.y..area.w-required_size.h) as f64;
                     let entity = entity::Entity::Mob(mobs.get(&loc.spawn.entity).unwrap().clone());
@@ -310,6 +327,8 @@ impl Map {
 
         //create character
         map.character = Some(entity::Character::new(character, items, class_map, race_map));
+
+        logger::log!("{:?}",map);
 
         map
     }

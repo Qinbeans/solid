@@ -4,7 +4,7 @@ use serde::{Serialize, Deserialize};
 
 use crate::game_reader::{toml_loader::{Rect, Size}, data::{Stats, mob::{self,Range}, race::Race, class::Class, character, item, effect::Effect, Affinity}, functions::Vector2D};
 
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 
 pub enum Entity {
     Character(Character),
@@ -12,13 +12,13 @@ pub enum Entity {
     Mob(Mob),
 }
 
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct Slot {
     pub name: String,
     pub item: Option<Item>
 }
 
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct Inventory {
     pub size: Size,
     pub data: HashMap<String, Item>,
@@ -26,7 +26,7 @@ pub struct Inventory {
     pub holding: HashMap<String,Slot>,
 }
 
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct Character {
     pub current_pos: Vector2D,
     pub store: String,
@@ -88,7 +88,7 @@ impl Character {
     }
 }
 
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct Item {
     pub name: String,
     pub texture: Rect,
@@ -111,19 +111,19 @@ impl Item {
     }
 }
 
-#[derive(Deserialize, Serialize, Clone)]
+#[derive(Deserialize, Serialize, Clone, Debug)]
 pub enum DropType {
     Fixed(i32),
     Range(Range),
 }
 
-#[derive(Deserialize, Serialize, Clone)]
+#[derive(Deserialize, Serialize, Clone, Debug)]
 pub enum Drops {
     Item(Item),
     Exp(Range)
 }
 
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct Mob {
     pub name: String,
     pub texture: Rect,
