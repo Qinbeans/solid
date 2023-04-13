@@ -1,0 +1,16 @@
+Items = [
+    # texture is the name of the texture file, rect is the rectangle of the texture to use
+    # stats are the stats that the item gives * the effect's multiplier
+    # effects(optional) are the effects that the item gives
+    # uses is the number of times the item can be used, -1 is infinite
+    # auto means after one trigger, it will keep going until it runs out of uses
+    { id = "item.elixir.health", name = "elixir of health", texture = "item.elixir.health", stats = { str = 0, agi = 0, dex = 0, int = 0, luk = 0, vit = 15, def = 0, rng = 0 }, effect = "effect.potion", uses = 10, auto = true }, # auto effectively makes this a one time use item
+    { id = "item.apparel.leather_cap", name = "leather cap", texture = "item.apparel.leather_cap", stats = { str = 0, agi = 0, dex = 0, int = 0, luk = 0, vit = 0, def = 1, rng = 0 }, effect = "effect.apparel", uses = 25, auto = false },
+    { id = "item.apparel.leather_armor", name = "leather armor", texture = "item.apparel.leather_armor", stats = { str = 0, agi = 0, dex = 0, int = 0, luk = 0, vit = 0, def = 2, rng = 0 }, effect = "effect.apparel", uses = 25, auto = false },
+    { id = "item.apparel.leather_pants", name = "leather pants", texture = "item.apparel.leather_pants", stats = { str = 0, agi = 0, dex = 0, int = 0, luk = 0, vit = 0, def = 1, rng = 0 }, effect = "effect.apparel", uses = 25, auto = false },
+    { id = "item.apparel.leather_boots", name = "leather boots", texture = "item.apparel.leather_boots", stats = { str = 0, agi = 0, dex = 0, int = 0, luk = 0, vit = 0, def = 1, rng = 0 }, effect = "effect.apparel", uses = 25, auto = false },
+    { id = "item.apparel.leather_gloves", name = "leather gloves", texture = "item.apparel.leather_gloves", stats = { str = 0, agi = 0, dex = 0, int = 0, luk = 0, vit = 0, def = 1, rng = 0 }, effect = "effect.apparel", uses = 25, auto = false },
+    { id = "item.weapon.rusty_dagger", name = "rusty dagger", texture = "item.weapon.rusty_dagger", stats = { str = 5, agi = 0, dex = 0, int = 0, luk = 0, vit = 0, def = 0, rng = 0 }, effect = "effect.weapon", uses = 25, auto = false },
+    { id = "item.weapon.excalibur", name = "excalibur", texture = "item.weapon.excalibur", stats = { str = 100, agi = 0, dex = 0, int = 0, luk = 0, vit = 0, def = 0, rng = 1 }, effect = "effect.weapon", uses = 100, auto = false },
+    { id = "item.misc.coin", name = "coin", texture = "item.misc.coin", stats = { str = 0, agi = 0, dex = 0, int = 0, luk = 0, vit = 0, def = 0, rng = 0 }, effect = "", uses = -1, auto = false },
+]

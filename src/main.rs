@@ -1,16 +1,23 @@
-use bevy::prelude::*;
-use window::game::{GamePlugin};
-use game_reader::configuration::{ScenePlugin};
+#![allow(clippy::unnecessary_wraps)]
+use ggez::event::{self};
+use ggez::{ContextBuilder};
 
-mod window;
 mod game_reader;
-mod ui;
+use game_reader::configuration::Game;
 
-#[tokio::main]
-async fn main() -> Result<(),()> {
-    App::new()
-        .add_plugin(GamePlugin::default())
-        .add_plugin(ScenePlugin::default())
-        .run();
-    Ok(())
+const AUTHOR: &str = "Ryan Fong";
+const TITLE: &str = "Solid";
+const SIZE: (f32, f32) = (800.0, 600.0);
+
+mod integrity;
+
+fn main() {
+    // Make a Context.
+    let (mut ctx, event_loop) = ContextBuilder::new(TITLE, AUTHOR)
+        .window_setup(ggez::conf::WindowSetup::default().title(TITLE))
+        .window_mode(ggez::conf::WindowMode::default().dimensions(SIZE.0, SIZE.1).resizable(true))
+        .build()
+        .expect("Could not create ggez context!");
+    let my_game = Game::new(&mut ctx);
+    event::run(ctx, event_loop, my_game);
 }

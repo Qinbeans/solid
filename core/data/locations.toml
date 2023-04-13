@@ -1,0 +1,18 @@
+Locations = [
+    # find a certain area matching description
+    # texture is the texture id we want to look for
+    # size is the size of the area we want to look for
+    # chance of a match becoming a location
+    # radius is the spawn radius around the center of the searched box
+    # description is the description of the location
+    # spawn is the spawn data for the location
+    #   entity is the entity id to spawn
+    #   trigger is the trigger type
+    #      onenter(num) - onenter is the trigger type, the num is irrelevant
+    #      proximity(num) - proximity is the trigger type, the num is the proximity radius
+    #   interval is the interval between spawns
+    #   chance is the chance of a spawn happening
+    #   uses is the number of times to spawn, -1 is infinite
+    #   auto is whether or not to spawn automatically
+    { id = "location.spawn.zombie", name = "Zombie Spawn", texture = "tile.grass", size = { w = 4, h = 4 }, chance = 0.2, radius = 10, description = "Zombie Spawn", spawn = { entity = "mob.zombie", trigger = { Proximity = 10 }, interval = 1, chance = 0.25, uses = -1, auto = false } },
+]

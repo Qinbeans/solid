@@ -2,6 +2,8 @@
 //https://docs.rs/noise/latest/noise/
 use serde::{Deserialize, Serialize};
 
+use super::toml_loader::Size;
+
 //store results into a vector
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -10,11 +12,30 @@ pub struct Vector2D {
     pub y: f64,
 }
 
+impl Default for Vector2D {
+    fn default() -> Self {
+        Vector2D {
+            x: 0.0,
+            y: 0.0
+        }
+    }
+}
+
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct Vector3D {
     pub x: f64,
     pub y: f64,
     pub z: f64,
+}
+
+impl Default for Vector3D {
+    fn default() -> Self {
+        Vector3D {
+            x: 0.0,
+            y: 0.0,
+            z: 0.0
+        }
+    }
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -25,22 +46,54 @@ pub struct Vector4D {
     pub w: f64,
 }
 
-#[derive(Clone, Debug)]
+impl Default for Vector4D {
+    fn default() -> Self {
+        Vector4D {
+            x: 0.0,
+            y: 0.0,
+            z: 0.0,
+            w: 0.0
+        }
+    }
+}
+
+//use templating
+pub struct Vector4T<T> {
+    pub x: T,
+    pub y: T,
+    pub z: T,
+    pub w: T,
+}
+
+impl <T> Vector4T<T> {
+    pub fn new(x: T, y: T, z: T, w: T) -> Self {
+        Vector4T {
+            x,
+            y,
+            z,
+            w,
+        }
+    }
+}
+
+impl Vector4T<u32> {
+    pub fn size(&self) -> Size {
+        Size {
+            w: self.z - self.x,
+            h: self.w - self.y,
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub enum Value {
-    #[allow(dead_code)]
     String(String),
-    #[allow(dead_code)]
     Float(f64),
-    #[allow(dead_code)]
     Int(i64),
-    #[allow(dead_code)]
     Function(Function),
-    #[allow(dead_code)]
     Vector2D(Vector2D),
-    #[allow(dead_code)]
     Vector3D(Vector3D),
-    #[allow(dead_code)]
-    Vector4D(Vector4D)
+    Vector4D(Vector4D),
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -61,6 +114,14 @@ pub enum Parameter {
     Vector4D(Vector4D),
     Scene(String),
     Texture(String),
+    Int(i64),
+    Float(f64),
+    Boolean(bool),
+    Max(i64),
+    Min(i64),
+    Default(Value),
+    Placeholder(String),
+    Options(Vec<Value>),
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]

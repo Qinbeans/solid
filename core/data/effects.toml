@@ -1,0 +1,16 @@
+# Trigger enumerations
+# None = -1
+# Use = 0
+# Hit = 1
+# Contact = 2
+# Proximity = 3
+
+Effects = [
+    # Trigger refers to the event that triggers the effect
+    # Duration is in seconds, interval is in ticks (1/20th of a second)
+    # Chance is in percent
+    # Min and max are the minimum and maximum values of the modifier
+    {id="effect.potion", name="potion", trigger="Use", duration=1, interval=1, chance=1, min=1, max=1},
+    {id="effect.apparel", name="apparel", trigger="Hit", duration=0, interval=1, chance=1, min=1, max=1},
+    {id="effect.weapon", name="weapon", trigger="Contact", duration=0, interval=1, chance=0.9, min=0.25, max=1},
+]

@@ -1,148 +1,95 @@
-use bevy::{ecs::system::Resource};
-use crate::game_reader::{
-    scene::Scene,
-    toml_loader::{TomlAsset,Configuration},
-};
-use bevy::prelude::*;
-use std::{fs, env, path::PathBuf, collections::HashMap};
+use ggegui::{Gui};
+use ggez::{event::EventHandler, graphics::{self, Color, DrawParam},glam};
 
-use crate::game_reader::functions::Function;
+use crate::{game_reader::{
+    toml_loader::{Configuration},
+}, integrity::Integrity};
+use std::path::Path;
+use super::{toml_loader::TomlAsset,scene::Scene};
 
-#[derive(Resource)]
-pub struct GameState {
-    pub current_scene: Option<Scene>,
-    pub configuration: Option<Configuration>,
+const COREDIR: &str = "core";
+const MODFILE: &str = "core/mods.toml";
+const BG_COLOR: Color = Color::new(0.0, 0.0, 0.0, 1.0);
+
+pub struct Game {
+    pub data: Box<Scene>,
+    pub configuration: Box<Configuration>,
+    pub gui: Gui,
 }
 
-#[derive(Resource, Clone)]
-pub struct ActionsState {
-    pub module_actions: HashMap<String, Vec<Function>>,
-}
-
-impl Default for GameState {
-    fn default() -> Self {
-        Self {
-            current_scene: None,
-            configuration: None,
-        }
-    }
-}
-
-impl Default for ActionsState {
-    fn default() -> Self {
-        Self {
-            module_actions: HashMap::new(),
-        }
-    }
-}
-
-#[derive(Default)]
-pub struct ScenePlugin;
-
-impl Plugin for ScenePlugin {
-    fn build(&self, app: &mut App) {
-        app.init_resource::<GameState>()
-            .init_resource::<ActionsState>()
-            .add_startup_system(setup)
-            .add_system( render);
-    }
-}
-
-fn setup(mut command: Commands, mut state: ResMut<GameState>, mut a_state: ResMut<ActionsState>, asset_server: Res<AssetServer>) {
-    command.spawn(Camera2dBundle::default());
-    let execpath: PathBuf = {
-        if let Ok(ok) = env::current_exe() {
-            ok.parent().unwrap().to_path_buf()
+impl Game {
+    pub fn new(ctx: &mut ggez::Context) -> Game {
+        #[cfg(debug_assertions)]
+        let mode = "debug";
+        #[cfg(not(debug_assertions))]
+        let mode = "release";
+        
+        let path = if mode == "debug" {
+            Path::new(MODFILE).to_owned()
         } else {
-            "".into()
-        }
-    };
-    let mut file = {
-        if let Ok(ok) = fs::read_to_string(execpath.join("core/mods.toml")) {
-            ok
-        } else {
-            "".into()
-        }
-    };
-    state.configuration = {
-        if let Ok(ok) = toml::from_str::<TomlAsset>(&file) {
-            if let TomlAsset::Configuration(configuration) = ok {
-                Some(configuration)
-            } else {
-                error!("Wrong asset type");
-                None
-            }
-        } else {
-            error!("Error loading mods.toml file");
-            None
-        }
-    };
-    file = {
-        if let Some(some) = &state.configuration {
-            if let Ok(ok) = fs::read_to_string(execpath.join("core/data/").join(&some.entry)){
+            //get executable path
+            //get parent path
+            let mut pathbuf = std::env::current_exe().unwrap();
+            pathbuf.pop();
+            pathbuf.push(MODFILE);
+            let path = pathbuf.as_path().to_owned();
+            path
+        };
+        let file_string = {
+            if let Ok(ok) = std::fs::read_to_string(path) {
                 ok
             } else {
-                "".into()
+                String::new()
             }
-        } else {
-            "".into()
-        }
-    };
-    state.current_scene = {
-        let res = toml::from_str::<TomlAsset>(&file);
-        if let Ok(ok) = res {
-            if let TomlAsset::Scene(scene) = ok {
-                Some(scene)
+        };
+        let mut configuration = {
+            let toml = toml::from_str::<TomlAsset>(&file_string);
+            if let Ok(ok) = toml {
+                match ok {
+                    TomlAsset::Configuration(configuration) => Box::new(configuration),
+                    _ => panic!("Could not load configuration file!"),
+                }
             } else {
-                error!("Wrong asset type");
-                None
+                println!("{}", toml.err().unwrap());
+                panic!("Could not load configuration file!");
             }
+        };
+        let core = if mode == "debug" {
+            Path::new(COREDIR).to_owned()
         } else {
-            if let Err(err) = res {
-                error!("Error loading entry scene: {}", err);
-            }
-            error!("Error loading entry scene");
-            None
+            //get executable path
+            //get parent path
+            let mut pathbuf = std::env::current_exe().unwrap();
+            pathbuf.pop();
+            pathbuf.push(COREDIR);
+            let path = pathbuf.as_path().to_owned();
+            path
+        };
+        configuration.get_sum(core.clone());
+        let res = Integrity::new(configuration.sum.clone(), core).check();
+        if let Err(err) = res {
+            panic!("Integrity check failed: {}", err);
         }
-    };
-    let tex_map = state.configuration.as_mut().unwrap().texture_map.clone();
-    if let Some(some) = &mut state.current_scene {
-        some.start(&mut command, &mut a_state, tex_map, &asset_server);
+        configuration.map_textures();
+        Game {
+            data: Box::new(Scene::new(*(configuration.clone()))),
+            configuration,
+            gui: Gui::new(ctx),
+        }
     }
 }
 
-fn render(mut interaction_query: Query<
-    (&Interaction, &mut BackgroundColor, &Children),
-    (Changed<Interaction>, With<Button>),
->,
-mut text_query: Query<&mut Text>, state: ResMut<ActionsState>) {
-    for (interaction, mut background_color, children) in interaction_query.iter_mut() {
-        let text = &text_query.get_mut(children[0]).unwrap().sections[0].value.clone();
-        let actions = {
-            if let Some(some) = state.module_actions.get(text) {
-                some.clone()
-            } else {
-                Vec::new()
-            }
-        };
-        match *interaction {
-            Interaction::Clicked => {
-                background_color.0 = crate::ui::ACTIVE;
-                for action in actions {
-                   match action.name.as_str() {
-                       "exit" => {
-                           std::process::exit(0);
-                       }
-                       _ => {}
-                   }
-                }
-            }
-            Interaction::Hovered => {
-                background_color.0 = crate::ui::HOVER;
-            }
-            Interaction::None => {
-                background_color.0 = crate::ui::NORMAL;
-            }
-        }
+impl EventHandler for Game {
+    fn update(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult {
+        //go through scene and update all entities
+        let _ = self.gui.ctx();
+        self.gui.update(ctx);
+        Ok(())
+    }
+
+    fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult {
+        let mut canvas = graphics::Canvas::from_frame(ctx, BG_COLOR);
+        canvas.draw(&self.gui, DrawParam::default().dest(glam::Vec2::ZERO));
+        canvas.finish(ctx)
     }
 }
