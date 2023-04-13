@@ -1,5 +1,4 @@
 pub mod location;
-pub mod effect;
 pub mod entity;
 
 use std::collections::HashMap;
@@ -17,7 +16,6 @@ const DATADIR: &str = "core/data";
 
 #[derive(Serialize)]
 pub struct Scene {
-    pub character: Character,
     pub map: Option<Map>,
 }
 
@@ -179,8 +177,27 @@ impl Scene {
             println!("{}", toml.err().unwrap());
             panic!("Could not load mobs file!");
         }
-        
-        scene.map = Some(Map::new(config, loc_map, class_map, effect_map, item_map, mission_map, mob_map, race_map));
+        file_string = {
+            if let Ok(ok) = std::fs::read_to_string(format!("{}/{}", DATADIR, "character.toml")) {
+                ok
+            } else {
+                String::new()
+            }
+        };
+        toml = toml::from_str::<TomlAsset>(&file_string);
+        let cha: data::character::Character = if let Ok(ok) = toml {
+            match ok {
+                TomlAsset::Character(raw_character) => {
+                    raw_character
+                },
+                _ => panic!("Could not load character file!"),
+            }
+        } else {
+            println!("{}", toml.err().unwrap());
+            panic!("Could not load character file!");
+        };
+
+        scene.map = Some(Map::new(config, cha, loc_map, class_map, effect_map, item_map, mission_map, mob_map, race_map));
 
         scene
     }
@@ -189,7 +206,6 @@ impl Scene {
 impl Default for Scene {
     fn default() -> Self {
         Self {
-            character: Character::default(),
             map: None,
         }
     }
@@ -197,14 +213,23 @@ impl Default for Scene {
 
 #[derive(Serialize)]
 pub struct Map {
-    pub locations: Vec<Location>,
+    //includes locations, items, mobs, effects
+    pub locations: HashMap<String, Location>,
+    //includes missions
+    pub missions: HashMap<String, data::mission::Mission>,
+    //includes character, race, class
+    pub character: Option<Character>,
     pub size: Size,
 }
 
 impl Map {
-    pub fn new(configs: Configuration, mut loc_map: HashMap<String, data::location::Location>, class_map: HashMap<String, data::class::Class>, effect_map: HashMap<String, data::effect::Effect>, item_map: HashMap<String, data::item::Item>, mission_map: HashMap<String, data::mission::Mission>, mob_map: HashMap<String, data::mob::Mob>, race_map: HashMap<String, data::race::Race>) -> Self {
+    pub fn new(configs: Configuration, character: data::character::Character, mut loc_map: HashMap<String, data::location::Location>, class_map: HashMap<String, data::class::Class>, effect_map: HashMap<String, data::effect::Effect>, item_map: HashMap<String, data::item::Item>, mission_map: HashMap<String, data::mission::Mission>, mob_map: HashMap<String, data::mob::Mob>, race_map: HashMap<String, data::race::Race>) -> Self {
         let mut map = Self::default();
+        let mut items: HashMap<String, entity::Item> = HashMap::new();
+        let mut mobs: HashMap<String, entity::Mob> = HashMap::new();
+
         map.size = configs.settings.size;
+        map.missions = mission_map.clone();
         //create a perlin noise map
         let fbm = Fbm::<Perlin>::new(0);
         let raw_map: Vec<i32> = PlaneMapBuilder::<_, 2>::new(&fbm)
@@ -241,6 +266,15 @@ impl Map {
         //initialize randomizer
         let mut rng = rand::thread_rng();
         
+        //create a map for items in persistent memory
+        for item in item_map.values() {
+            items.insert(item.id.clone(), entity::Item::new(item.clone(), effect_map.get(&item.effect).unwrap().clone(), configs.tex_map.get(&item.texture).unwrap().clone()));
+        }
+        //create a map for mobs in persistent memory
+        for mob in mob_map.values() {
+            mobs.insert(mob.id.clone(), entity::Mob::new(mob.clone(),configs.tex_map.get(&mob.texture).unwrap().clone(), items.clone()));
+        }
+
         //go through each location and find groups of tiles that match the location
         loc_map.retain(|_,loc| {
             let loc_groups = groups.get(&loc.texture).unwrap();
@@ -252,11 +286,30 @@ impl Map {
                     //subtract the required size from the group size to prevent the location from going off the map
                     let x = rng.gen_range(area.x..area.z-required_size.w) as f64;
                     let y = rng.gen_range(area.y..area.w-required_size.h) as f64;
-                    map.locations.push(location::Location::new(loc.clone(), Vector2D {x,y}, entity::Entity::Mob(entity::Mob{})));
+                    let entity = {
+                        match &loc.spawn.entity {
+                            data::Entity::Mob(mob) => {
+                                let mob = mobs.get(&mob.id).unwrap().clone();
+                                entity::Entity::Mob(mob)
+                            },
+                            data::Entity::Item(item) => {
+                                let item = items.get(&item.id).unwrap().clone();
+                                entity::Entity::Item(item)
+                            },
+                            _ => panic!("Invalid entity type!"),
+                        }
+                    };
+                    map.locations.insert(loc.id.clone(), location::Location::new(loc.clone(), Vector2D {x,y}, entity));
                 }
             }
             true
         });
+
+        //missions are kinda loosely used and defined
+        //they are used to spawn mobs in locations
+
+        //create character
+        map.character = Some(entity::Character::new(character, items, class_map, race_map));
 
         map
     }
@@ -265,7 +318,9 @@ impl Map {
 impl Default for Map {
     fn default() -> Self {
         Self {
-            locations: Vec::new(),
+            locations: HashMap::new(),
+            missions: HashMap::new(),
+            character: None,
             size: Size::default(),
         }
     }

@@ -1,8 +1,8 @@
-use serde::{Deserialize};
+use serde::{Deserialize, Serialize};
 
 use super::Stats;
 
-#[derive(Deserialize)]
+#[derive(Serialize, Deserialize, Clone)]
 pub struct Class {
     pub id: String,
     pub name: String,

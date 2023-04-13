@@ -1,5 +1,5 @@
 Mobs = [
-    { id = "mob.zombie", name = "zombie", level = 1, stats = { str = 15, agi = 15, dex = 15, int = 15, luk = 15, vit = 15, def = 15 }, friendly = false, affinity = 5, drops = [
+    { id = "mob.zombie", name = "zombie", texture = "mob.zombie", level = 1, stats = { str = 15, agi = 15, dex = 15, int = 15, luk = 15, vit = 15, def = 15 }, friendly = false, affinity = 5, drops = [
         { item = { id = "item.elixir.health", chance = 0.2, amount = { Fixed = 1 } } } ,
         { item = { id = "item.apparel.leather_cap", chance = 0.1, amount = { Fixed = 1 } } },
         { item = { id = "item.apparel.leather_armor", chance = 0.1, amount = { Fixed = 1 } } },

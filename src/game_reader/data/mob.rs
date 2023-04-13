@@ -1,8 +1,8 @@
-use serde::{Deserialize};
+use serde::{Deserialize, Serialize};
 
 use super::{Stats, Affinity};
 
-#[derive(Deserialize, Clone)]
+#[derive(Deserialize, Serialize, Clone)]
 pub struct Range {
     pub min: i32,
     pub max: i32,
@@ -31,6 +31,7 @@ pub enum Drops {
 pub struct Mob {
     pub id: String,
     pub name: String,
+    pub texture: String,
     pub level: i32,
     pub stats: Stats,
     pub friendly: bool,

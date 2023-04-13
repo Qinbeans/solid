@@ -32,6 +32,7 @@ impl Spawn {
 
 #[derive(Serialize, Deserialize)]
 pub struct Location {
+    pub id: String,
     pub name: String,
     //The scene processes and finds the location using context from the data Location 
     pub position: Vector2D,
@@ -45,6 +46,7 @@ pub struct Location {
 impl Location {
     pub fn new(loc: location::Location, position: Vector2D, entity: Entity) -> Self {
         Self {
+            id: loc.id,
             name: loc.name,
             position,
             size: loc.size,

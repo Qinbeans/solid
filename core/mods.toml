@@ -34,7 +34,9 @@ textures=[
     {id="race.elf",rect={x=32,y=64,w=32,h=32}},
     {id="race.demon",rect={x=64,y=64,w=32,h=32}},
     {id="race.angel",rect={x=128,y=64,w=32,h=32}},
-    {id="race.beastman",rect={x=160,y=64,w=32,h=32}}
+    {id="race.beastman",rect={x=160,y=64,w=32,h=32}},
+    # Row 7: races -> front, left, right, back
+    {id="mob.zombie",rect={x=0,y=96,w=32,h=32}},
 ]
 
 # default settings
