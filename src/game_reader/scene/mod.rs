@@ -238,7 +238,7 @@ impl Map {
           .set_y_bounds(-5.0, 5.0)
           .build()
           .iter()
-          .map(|&x| x as i32)
+          .map(|&x| (((x + 2.0) * 10.0) as i32) % configs.texture_map.tiles.len() as i32 )
           .collect();
 
         //find groupings of similar values using a hashmap of vectors
@@ -247,7 +247,12 @@ impl Map {
             for x in 0..map.size.w {
                 let index = (y * map.size.w + x) as usize;
                 let value = raw_map[index];
-                let key = configs.texture_map.tiles.get(value as usize).unwrap().clone();
+                let key = if let Some(val) = configs.texture_map.tiles.get(value as usize) {
+                    val.clone()
+                } else {
+                    println!("Could not find tile for value: {}", value);
+                    "grass".to_string()
+                };
                 let group = groups.entry(key).or_insert(Vec::new());
                 //increase the size of the last group if it is adjacent to the current tile
                 if let Some(last) = group.last_mut() {
@@ -265,14 +270,21 @@ impl Map {
     
         //initialize randomizer
         let mut rng = rand::thread_rng();
-        
+
         //create a map for items in persistent memory
         for item in item_map.values() {
-            items.insert(item.id.clone(), entity::Item::new(item.clone(), effect_map.get(&item.effect).unwrap().clone(), configs.tex_map.get(&item.texture).unwrap().clone()));
+            let rect = configs.tex_map.get(&item.texture).unwrap().clone();
+            let effect = if let Some(effect) = effect_map.get(&item.effect) {
+                Some(effect.clone())
+            } else {
+                None
+            };
+            items.insert(item.id.clone(), entity::Item::new(item.clone(), effect, rect));
         }
         //create a map for mobs in persistent memory
         for mob in mob_map.values() {
-            mobs.insert(mob.id.clone(), entity::Mob::new(mob.clone(),configs.tex_map.get(&mob.texture).unwrap().clone(), items.clone()));
+            let rect = configs.tex_map.get(&mob.texture).unwrap().clone();
+            mobs.insert(mob.id.clone(), entity::Mob::new(mob.clone(), rect, items.clone()));
         }
 
         //go through each location and find groups of tiles that match the location
@@ -286,19 +298,7 @@ impl Map {
                     //subtract the required size from the group size to prevent the location from going off the map
                     let x = rng.gen_range(area.x..area.z-required_size.w) as f64;
                     let y = rng.gen_range(area.y..area.w-required_size.h) as f64;
-                    let entity = {
-                        match &loc.spawn.entity {
-                            data::Entity::Mob(mob) => {
-                                let mob = mobs.get(&mob.id).unwrap().clone();
-                                entity::Entity::Mob(mob)
-                            },
-                            data::Entity::Item(item) => {
-                                let item = items.get(&item.id).unwrap().clone();
-                                entity::Entity::Item(item)
-                            },
-                            _ => panic!("Invalid entity type!"),
-                        }
-                    };
+                    let entity = entity::Entity::Mob(mobs.get(&loc.spawn.entity).unwrap().clone());
                     map.locations.insert(loc.id.clone(), location::Location::new(loc.clone(), Vector2D {x,y}, entity));
                 }
             }

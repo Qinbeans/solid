@@ -14,5 +14,5 @@ Locations = [
     #   chance is the chance of a spawn happening
     #   uses is the number of times to spawn, -1 is infinite
     #   auto is whether or not to spawn automatically
-    { id = "location.spawn.zombie", name = "Zombie Spawn", texture = "tile.grass", size = { w = 4, h = 4 }, chance = 0.2, radius = 10, description = "Zombie Spawn", spawn = { entity = "mob.zombie", trigger = {proximity=10}, interval = 1, chance = 0.25, uses = -1, auto = false } },
+    { id = "location.spawn.zombie", name = "Zombie Spawn", texture = "tile.grass", size = { w = 4, h = 4 }, chance = 0.2, radius = 10, description = "Zombie Spawn", spawn = { entity = "mob.zombie", trigger = { Proximity = 10 }, interval = 1, chance = 0.25, uses = -1, auto = false } },
 ]

@@ -79,8 +79,8 @@ impl <T> Vector4T<T> {
 impl Vector4T<u32> {
     pub fn size(&self) -> Size {
         Size {
-            w: self.x - self.z,
-            h: self.y - self.w,
+            w: self.z - self.x,
+            h: self.w - self.y,
         }
     }
 }

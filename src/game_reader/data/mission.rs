@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize, Serialize, Clone)]
 pub enum Goal {
-    Hunt
+    Hunt(Hunt)
 }
 
 #[derive(Deserialize, Serialize, Clone)]

@@ -2,8 +2,6 @@ use serde::{Deserialize, Serialize};
 
 use crate::game_reader::toml_loader::Size;
 
-use super::Entity;
-
 #[derive(Deserialize, Serialize, Clone)]
 pub enum Trigger {
     OnEnter(i32),
@@ -12,7 +10,7 @@ pub enum Trigger {
 
 #[derive(Deserialize, Clone)]
 pub struct Spawn {
-    pub entity: Entity,
+    pub entity: String,
     pub trigger: Trigger,
     pub interval: f32,
     pub chance: f32,

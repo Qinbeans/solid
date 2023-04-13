@@ -17,7 +17,7 @@ pub enum DropType {
 #[derive(Deserialize, Clone)]
 pub struct Item {
     pub id: String,
-    pub chance: i32,
+    pub chance: f32,
     pub amount: DropType,
 }
 

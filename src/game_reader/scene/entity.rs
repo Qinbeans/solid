@@ -44,19 +44,27 @@ impl Character {
     pub fn new(character: character::Character, items: HashMap<String, Item>, classes: HashMap<String, Class>, races: HashMap<String, Race>) -> Self {
         let mut apparel = HashMap::new();
         for slot in character.inventory.apparel {
-            let item = items.get(&slot.item).unwrap().clone();
+            let item = if let Some(val) = items.get(&slot.item){
+                Some(val.clone())
+            } else {
+                None
+            };
             let slot = Slot {
                 name: slot.name,
-                item: Some(item)
+                item
             };
             apparel.insert(slot.name.clone(), slot);
         }
         let mut holding = HashMap::new();
         for slot in character.inventory.holding {
-            let item = items.get(&slot.item).unwrap().clone();
+            let item = if let Some(val) = items.get(&slot.item) {
+                Some(val.clone())
+            } else {
+                None
+            };
             let slot = Slot {
                 name: slot.name,
-                item: Some(item)
+                item
             };
             holding.insert(slot.name.clone(), slot);
         }
@@ -85,13 +93,13 @@ pub struct Item {
     pub name: String,
     pub texture: Rect,
     pub stats: Stats,
-    pub effect: Effect,
+    pub effect: Option<Effect>,
     pub uses: i32,
     pub auto: bool,
 }
 
 impl Item {
-    pub fn new(item: item::Item, effect: Effect, texture: Rect) -> Self {
+    pub fn new(item: item::Item, effect: Option<Effect>, texture: Rect) -> Self {
         Self {
             name: item.name,
             texture,

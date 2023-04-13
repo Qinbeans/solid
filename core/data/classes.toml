@@ -1,6 +1,6 @@
 Classes = [
-    { id = "class.warrior", name = "warrior", stats = { str = 10, agi = 30, dex = 5, int = 0, luk = 15, vit = 30, def = 15 } },
-    { id = "class.priest", name = "priest", stats = { str = 5, agi = 10, dex = 5, int = 35, luk = 10, vit = 20, def = 20 } },
-    { id = "class.mage", name = "mage", stats = { str = 5, agi = 15, dex = 5, int = 35, luk = 15, vit = 15, def = 15 } },
-    { id = "class.thief", name = "thief", stats = { str = 10, agi = 30, dex = 35, int = 5, luk = 15, vit = 5, def = 5 } },
+    { id = "class.warrior", name = "warrior", stats = { str = 10, agi = 30, dex = 5, int = 0, luk = 15, vit = 30, def = 15, rng = 1 } },
+    { id = "class.priest", name = "priest", stats = { str = 5, agi = 10, dex = 5, int = 35, luk = 10, vit = 20, def = 20, rng = 2 } },
+    { id = "class.mage", name = "mage", stats = { str = 5, agi = 15, dex = 5, int = 35, luk = 15, vit = 15, def = 15, rng = 5 } },
+    { id = "class.thief", name = "thief", stats = { str = 10, agi = 30, dex = 35, int = 5, luk = 15, vit = 5, def = 5, rng = 1 } },
 ]

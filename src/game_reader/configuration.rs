@@ -35,7 +35,7 @@ impl Game {
             let path = pathbuf.as_path().to_owned();
             path
         };
-        let mut file_string = {
+        let file_string = {
             if let Ok(ok) = std::fs::read_to_string(path) {
                 ok
             } else {
@@ -82,7 +82,7 @@ impl Game {
 impl EventHandler for Game {
     fn update(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult {
         //go through scene and update all entities
-        let gui_ctx = self.gui.ctx();
+        let _ = self.gui.ctx();
         self.gui.update(ctx);
         Ok(())
     }

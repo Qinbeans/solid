@@ -4,5 +4,5 @@
 # 1 = on spawn
 
 Missions = [
-    { id = "mission.hunt.zombies", name = "Zombie Hunt", location = "location.spawn.zombie", goal = { Hunt = { number = 10, count = 0, target = "mob.zombie" } }, trigger = 1 }
+    { id = "mission.hunt.zombies", name = "Zombie Hunt", location = "location.spawn.zombie", goal = { Hunt = { number = 10, count = 0, target = "mob.zombie" } }, trigger = "Spawn" }
 ]

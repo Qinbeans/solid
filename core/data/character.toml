@@ -24,8 +24,8 @@ race = "race.human"
 class = "class.warrior"
 name = "default"
 level = 1
-exp = 0
-affinity = -1
+experience = 0
+affinity = "None"
 
 [Character.stats]
 str = 15
