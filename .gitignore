@@ -1,3 +1,4 @@
 /target
 proposal.*
 *.xcf
+.DS_Store
