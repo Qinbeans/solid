@@ -30,11 +30,26 @@ pub mod logger {
     macro_rules! debug {
         ($msg:expr) => {
             //color the log blue
-            println!("\x1b[34m[debug]: {}\x1b[0m", $msg);
+            if cfg!(debug_assertions) {
+                eprintln!("\x1b[34m[debug]: {}\x1b[0m", $msg);
+            }
         };
         ($msg:expr, $($arg:tt)*) => {
             //color the log blue
-            println!("\x1b[34m[debug]: {}\x1b[0m", format!($msg, $($arg)*));
+            if cfg!(debug_assertions) {
+                eprintln!("\x1b[34m[debug]: {}\x1b[0m", format!($msg, $($arg)*));
+            }
+        };
+    }
+    #[allow(unused_macros)]
+    macro_rules! alert {
+        ($msg:expr) => {
+            //color the log yellow
+            eprintln!("\x1b[33m[warn]: {}\x1b[0m", $msg);
+        };
+        ($msg:expr, $($arg:tt)*) => {
+            //color the log yellow
+            eprintln!("\x1b[33m[warn]: {}\x1b[0m", format!($msg, $($arg)*));
         };
     }
     #[allow(unused_imports)]
@@ -43,4 +58,6 @@ pub mod logger {
     pub(crate) use error;
     #[allow(unused_imports)]
     pub(crate) use debug;
+    #[allow(unused_imports)]
+    pub(crate) use alert;
 }

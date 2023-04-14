@@ -1,18 +1,19 @@
 pub mod location;
 pub mod entity;
 
-use std::collections::HashMap;
+use std::{collections::HashMap, fmt::{Debug, Formatter}};
 
-use crate::game_reader::logger::error;
+use crate::game_reader::logger::{debug, error};
 
 use self::entity::{Character};
 
-use super::{logger,toml_loader::{Size, TomlAsset, Configuration}, data, functions::{Vector4T, Vector2D}};
+use super::{toml_loader::{Size, TomlAsset, Configuration}, data, functions::{Vector4T, Vector2D, Vector2T}};
 use noise::{Fbm, Perlin};
 use noise::utils::{NoiseMapBuilder, PlaneMapBuilder};
 use serde::{Serialize, Deserialize};
 use location::Location;
 use rand::Rng;
+use serde_with::serde_as;
 
 const DATADIR: &str = "core/data";
 
@@ -50,7 +51,7 @@ impl Scene {
                 _ => panic!("Could not load classes file!"),
             }
         } else {
-            println!("{}", toml.err().unwrap());
+            error!("{}", toml.err().unwrap());
             panic!("Could not load classes file!");
         }
         file_string = {
@@ -71,7 +72,7 @@ impl Scene {
                 _ => panic!("Could not load effects file!"),
             }
         } else {
-            println!("{}", toml.err().unwrap());
+            error!("{}", toml.err().unwrap());
             panic!("Could not load effects file!");
         }
         file_string = {
@@ -92,7 +93,7 @@ impl Scene {
                 _ => panic!("Could not load items file!"),
             }
         } else {
-            println!("{}", toml.err().unwrap());
+            error!("{}", toml.err().unwrap());
             panic!("Could not load items file!");
         }
         file_string = {
@@ -113,7 +114,7 @@ impl Scene {
                 _ => panic!("Could not load locations file!"),
             }
         } else {
-            println!("{}", toml.err().unwrap());
+            error!("{}", toml.err().unwrap());
             panic!("Could not load locations file!");
         }
         file_string = {
@@ -134,7 +135,7 @@ impl Scene {
                 _ => panic!("Could not load missions file!"),
             }
         } else {
-            println!("{}", toml.err().unwrap());
+            error!("{}", toml.err().unwrap());
             panic!("Could not load missions file!");
         }
         file_string = {
@@ -155,7 +156,7 @@ impl Scene {
                 _ => panic!("Could not load mobs file!"),
             }
         } else {
-            println!("{}", toml.err().unwrap());
+            error!("{}", toml.err().unwrap());
             panic!("Could not load mobs file!");
         }
         file_string = {
@@ -176,7 +177,7 @@ impl Scene {
                 _ => panic!("Could not load mobs file!"),
             }
         } else {
-            println!("{}", toml.err().unwrap());
+            error!("{}", toml.err().unwrap());
             panic!("Could not load mobs file!");
         }
         file_string = {
@@ -195,7 +196,7 @@ impl Scene {
                 _ => panic!("Could not load character file!"),
             }
         } else {
-            println!("{}", toml.err().unwrap());
+            error!("{}", toml.err().unwrap());
             panic!("Could not load character file!");
         };
 
@@ -213,7 +214,8 @@ impl Default for Scene {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[serde_as]
+#[derive(Serialize, Deserialize)]
 pub struct Map {
     //includes locations, items, mobs, effects
     pub locations: HashMap<String, Location>,
@@ -221,7 +223,19 @@ pub struct Map {
     pub missions: HashMap<String, data::mission::Mission>,
     //includes character, race, class
     pub character: Option<Character>,
+    #[serde_as(as = "Vec<(_,_)>")]
+    pub map: HashMap<Vector2T<u32>,u32>,
     pub size: Size,
+}
+
+impl Debug for Map {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        //serialize the map into a json string
+        //pretty print it
+        let map = serde_json::to_string_pretty(&self).unwrap();
+        //write the map to the formatter
+        write!(f, "{}", map)
+    }
 }
 
 impl Map {
@@ -250,8 +264,7 @@ impl Map {
                 let group_name = if let Some(val) = configs.texture_map.tiles.get(value as usize) {
                     val.clone()
                 } else {
-                    error!("Could not find tile for value: {}", value);
-                    "tile.grass".to_string()
+                    panic!("Could not find tile for value: {}", value);
                 };
                 //check if the group exists
                 if let Some(group) = groups.get_mut(&group_name) {
@@ -278,6 +291,7 @@ impl Map {
                     //if it doesn't, create a new group and add the current tile to it
                     groups.insert(group_name.clone(), vec![Vector4T::new(x, y, x + 1, y + 1)]);
                 }
+                map.map.entry(Vector2T::new(x, y)).or_insert(value);
             }
         }
     
@@ -309,9 +323,9 @@ impl Map {
                 if area.size() >= required_size {
                     //choose somewhere in the group to place the location
                     //subtract the required size from the group size to prevent the location from going off the map
-                    if area.z-required_size.w < area.x || area.w-required_size.h < area.y {
-                        error!("Location {} is too large for the tile", loc.id);
-                        return false;
+                    if area.z-required_size.w <= area.x || area.w-required_size.h <= area.y {
+                        debug!("Location {} is too large for the tile", loc.id);
+                        continue;
                     }
                     let x = rng.gen_range(area.x..area.z-required_size.w) as f64;
                     let y = rng.gen_range(area.y..area.w-required_size.h) as f64;
@@ -328,8 +342,6 @@ impl Map {
         //create character
         map.character = Some(entity::Character::new(character, items, class_map, race_map));
 
-        logger::log!("{:?}",map);
-
         map
     }
 }
@@ -340,6 +352,7 @@ impl Default for Map {
             locations: HashMap::new(),
             missions: HashMap::new(),
             character: None,
+            map: HashMap::new(),
             size: Size::default(),
         }
     }

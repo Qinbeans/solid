@@ -20,6 +20,20 @@ impl Default for Vector2D {
         }
     }
 }
+#[derive(Deserialize, Serialize, Clone, Default, Debug, PartialEq, PartialOrd, Eq, Hash)]
+pub struct Vector2T<T>{
+    pub x: T,
+    pub y: T,
+}
+
+impl <T> Vector2T<T> {
+    pub fn new(x: T, y: T) -> Self {
+        Vector2T {
+            x,
+            y,
+        }
+    }
+}
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct Vector3D {
