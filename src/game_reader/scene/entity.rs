@@ -15,7 +15,8 @@ pub enum Entity {
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct Slot {
     pub name: String,
-    pub item: Option<Item>
+    pub item: Option<Item>,
+    pub amount: i32,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -51,7 +52,8 @@ impl Character {
             };
             let slot = Slot {
                 name: slot.name,
-                item
+                item,
+                amount: slot.amount,
             };
             apparel.insert(slot.name.clone(), slot);
         }
@@ -64,7 +66,8 @@ impl Character {
             };
             let slot = Slot {
                 name: slot.name,
-                item
+                item,
+                amount: slot.amount,
             };
             holding.insert(slot.name.clone(), slot);
         }

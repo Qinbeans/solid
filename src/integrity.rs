@@ -1,5 +1,5 @@
 use std::{path::PathBuf};
-use std::fs::File;
+use std::fs::{File, DirEntry};
 use std::io::Read;
 use sha2::{Sha256, Digest};
 
@@ -33,12 +33,9 @@ impl Integrity {
         if paths.is_err() {
             return Err("Could not read directory from paths".to_string());
         }
-        let paths = paths.unwrap();
+        let mut paths: Vec<DirEntry> = paths.unwrap().map(|r| r.unwrap()).collect();
+        paths.sort_by_key(|a| a.path());
         for entry in paths {
-            if entry.is_err() {
-                return Err("Could not read directory from entry".to_string());
-            }
-            let entry = entry.unwrap();
             let path = entry.path();
             if path.is_dir() {
                 let res = self.rec_sum(path);

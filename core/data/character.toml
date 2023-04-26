@@ -43,14 +43,14 @@ size = {w=10,h=10}
 data = []
 # items refers to the item id
 apparel = [
-    {name="head",item=""},
-    {name="body",item=""},
-    {name="legs",item=""},
-    {name="feet",item=""},
-    {name="hands",item=""},
-    {name="accessory",item=""},
+    {name="head",item="", amount=0},
+    {name="body",item="", amount=0},
+    {name="legs",item="", amount=0},
+    {name="feet",item="", amount=0},
+    {name="hands",item="", amount=0},
+    {name="accessory",item="", amount=0},
 ]
 holding = [
-    {name="left",item="item.weapon.rusty_dagger"},
-    {name="right",item=""},
+    {name="left",item="item.weapon.rusty_dagger", amount=1},
+    {name="right",item="", amount=1},
 ]

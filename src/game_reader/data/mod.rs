@@ -48,7 +48,8 @@ impl Default for Stats {
 #[derive(Deserialize, Clone)]
 pub struct Slot {
     pub name: String,
-    pub item: String
+    pub item: String,
+    pub amount: i32,
 }
 
 #[derive(Deserialize, Clone)]

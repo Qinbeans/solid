@@ -83,6 +83,15 @@ impl EventHandler for Game {
     fn update(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult {
         //go through scene and update all entities
         let _ = self.gui.ctx();
+        //get window size
+        let (width, height) = ctx.gfx.size();
+        //check if window size matches configuration
+        if width != self.configuration.settings.resolution.w as f32 || height != self.configuration.settings.resolution.h as f32{
+            //set ctx size
+            if let Err(e) = ctx.gfx.set_drawable_size(self.configuration.settings.resolution.w as f32, self.configuration.settings.resolution.h as f32) {
+                println!("Could not set window size: {}", e);
+            }
+        }
         self.gui.update(ctx);
         Ok(())
     }

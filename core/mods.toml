@@ -17,24 +17,24 @@ textures=[
     {id="tile.savanah",rect={x=160,y=0,w=32,h=32}},
     {id="tile.dirt",rect={x=192,y=0,w=32,h=32}},
     # Row 2: items
-    {id="item.elixir.health",rect={x=0,y=32,w=16,h=16}},
+    {id="item.misc.coin",rect={x=224,y=0,w=16,h=16}},
+    {id="item.elixir.health",rect={x=240,y=0,w=16,h=16}},
+    {id="item.apparel.gloves.leather",rect={x=224,y=16,w=16,h=16}},
+    {id="item.apparel.boots.leather",rect={x=240,y=16,w=16,h=16}},
     # break the tile into 4 parts 16x16 pixels
-    {id="item.apparel.head.leather",rect={x=16,y=32,w=32,h=32}},
-    {id="item.apparel.chest.leather",rect={x=48,y=32,w=16,h=32}},
-    {id="item.apparel.pants.leather",rect={x=64,y=32,w=32,h=32}},
-    {id="item.apparel.boots.leather",rect={x=0,y=48,w=16,h=16}},
-    {id="item.apparel.gloves.leather",rect={x=96,y=32,w=16,h=16}},
+    {id="item.apparel.head.leather",rect={x=0,y=32,w=32,h=32}},
+    {id="item.apparel.chest.leather",rect={x=32,y=32,w=16,h=32}},
+    {id="item.apparel.pants.leather",rect={x=48,y=32,w=16,h=16}},
     # break the tile into 2 parts 16x16 pixels
-    {id="item.weapon.rusty_dagger",rect={x=96,y=48,w=16,h=16}},
-    {id="item.weapon.excalibur",rect={x=112,y=32,w=16,h=32}},
-    {id="item.misc.coin",rect={x=192,y=48,w=16,h=16}},
+    {id="item.weapon.rusty_dagger",rect={x=48,y=48,w=16,h=16}},
+    {id="item.weapon.excalibur",rect={x=64,y=32,w=16,h=32}},
     # Row 4 - 6: races -> front, left, right, back
     # break the tile into 4 parts 16x16 pixels
-    {id="race.human",rect={x=0,y=64,w=32,h=32}},
-    {id="race.elf",rect={x=32,y=64,w=32,h=32}},
-    {id="race.demon",rect={x=64,y=64,w=32,h=32}},
-    {id="race.angel",rect={x=128,y=64,w=32,h=32}},
-    {id="race.beastman",rect={x=160,y=64,w=32,h=32}},
+    {id="race.human",rect={x=80,y=32,w=32,h=32}},
+    {id="race.demon",rect={x=112,y=32,w=32,h=32}},
+    {id="race.elf",rect={x=144,y=32,w=32,h=32}},
+    {id="race.beastman",rect={x=176,y=32,w=32,h=32}},
+    {id="race.angel",rect={x=208,y=32,w=32,h=32}},
     # Row 7: races -> front, left, right, back
     {id="mob.zombie",rect={x=0,y=96,w=32,h=32}},
 ]
