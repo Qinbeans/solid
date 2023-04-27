@@ -3,11 +3,11 @@ pub mod entity;
 
 use std::{collections::HashMap, fmt::{Debug, Formatter}};
 
-use crate::game_reader::logger::{debug, error};
+use crate::core::logger::{debug, error};
 
 use self::entity::{Character};
 
-use super::{toml_loader::{Size, TomlAsset, Configuration}, data, functions::{Vector4T, Vector2D, Vector2T}};
+use crate::core::{toml_loader::{Size, TomlAsset, Configuration}, data, functions::{Vector4T, Vector2D, Vector2T}};
 use noise::{Fbm, Perlin};
 use noise::utils::{NoiseMapBuilder, PlaneMapBuilder};
 use serde::{Serialize, Deserialize};

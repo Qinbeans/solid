@@ -1,8 +1,7 @@
 pub mod functions;
-pub mod toml_loader;
-pub mod configuration;
 pub mod data;
-pub mod scene;
+pub mod toml_loader;
+
 pub mod logger {
     #[allow(unused_macros)]
     macro_rules! log {
@@ -60,4 +59,10 @@ pub mod logger {
     pub(crate) use debug;
     #[allow(unused_imports)]
     pub(crate) use alert;
+}
+
+pub trait Event {
+    fn update(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()>;
+    fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()>;
+    fn status(&self) -> bool;
 }

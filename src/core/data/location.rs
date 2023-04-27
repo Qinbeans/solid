@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::game_reader::toml_loader::Size;
+use crate::core::toml_loader::Size;
 
 #[derive(Deserialize, Serialize, Clone, Debug)]
 pub enum Trigger {

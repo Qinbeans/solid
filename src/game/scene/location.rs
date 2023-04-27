@@ -1,6 +1,6 @@
 use serde::{Serialize, Deserialize};
 
-use crate::game_reader::{functions::Vector2D, toml_loader::Size, data::location::Trigger, data::location};
+use crate::core::{functions::Vector2D, toml_loader::Size, data::location::Trigger, data::location};
 
 use super::entity::Entity;
 

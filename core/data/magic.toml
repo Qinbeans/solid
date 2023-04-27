@@ -1,0 +1,7 @@
+Runes = [
+    # drain = -1 would mean it requires a number to be assigned
+    {id="rune.forward", name="Forward", texture="rune.forward", description="Move forward", todo="$forward", render_attribute=false, drain=1},
+    {id="rune.bolt", name="Bolt", texture="rune.bolt", description="Spawn bolt", todo="$bolt", render_attribute=true, drain=1},
+    {id="rune.range", name="Range", texture="rune.range", description="Dispels your magic at a certain range", todo="$range", render_attribute=false, drain=-1},
+    {id="rune.shield", name="Shield", texture="rune.shield", description="Shield yourself from incoming magic", todo="$shield", render_attribute=false, drain=1},
+]

@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use serde::{Serialize, Deserialize};
 
-use crate::game_reader::{toml_loader::{Rect, Size}, data::{Stats, mob::{self,Range}, race::Race, class::Class, character, item, effect::Effect, Affinity}, functions::Vector2D};
+use crate::core::{toml_loader::{Rect, Size}, data::{Stats, mob::{self,Range}, race::Race, class::Class, character, item, effect::Effect, Affinity}, functions::Vector2D};
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 
