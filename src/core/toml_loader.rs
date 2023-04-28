@@ -1,6 +1,5 @@
-use std::{path::PathBuf, collections::HashMap};
+use std::{path::PathBuf, collections::HashMap, env::{current_dir},io::Read};
 use crate::core::logger::debug;
-
 use super::{data::{
     character::Character,
     class::Class,
@@ -41,11 +40,27 @@ pub struct Texture {
 }
 
 //Lists position of textures in a texture map
-#[derive(Deserialize, Serialize, Clone, Default, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug)]
 pub struct TextureMap {
     pub path: String,
     pub tiles: Vec<String>,
     pub textures: Vec<Texture>,
+    #[serde(skip)]
+    pub file: Vec<u8>,
+}
+
+impl TextureMap {
+    pub fn load_image(&mut self)  {
+        #[cfg(debug_assertions)]
+        let path = current_dir().unwrap().join("core").join("assets").join("textures").join(PathBuf::from(&self.path));
+        #[cfg(not(debug_assertions))]
+        let path = current_exe().unwrap().parent().unwrap().join("core").join("assets").join("textures").join(PathBuf::from(&self.path));
+        let raw_file = std::fs::File::open(path).unwrap();
+        let mut buf_reader = std::io::BufReader::new(raw_file);
+        let mut buf = Vec::new();
+        buf_reader.read_to_end(&mut buf).unwrap();
+        self.file = buf;
+    }
 }
 
 //Size of something in unsigned integer form
@@ -78,6 +93,7 @@ pub struct Settings {
     pub size: Size,
     pub window_mode: String,
     pub resolution: Size,
+    pub fit: Size,
     pub keymap: KeyMap,
     pub scale: f32,
 }

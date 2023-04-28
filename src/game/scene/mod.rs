@@ -3,7 +3,7 @@ pub mod entity;
 
 use std::{collections::HashMap, fmt::{Debug, Formatter}};
 
-use crate::core::logger::{debug, error};
+use crate::core::{logger::{debug, error}};
 
 use self::entity::{Character};
 
@@ -213,6 +213,7 @@ impl Default for Scene {
         }
     }
 }
+
 
 #[serde_as]
 #[derive(Serialize, Deserialize)]

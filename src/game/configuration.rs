@@ -2,12 +2,13 @@ use egui::{RichText, Button, Color32, Widget};
 use ggegui::{Gui};
 use ggez::{graphics::{self, Color, DrawParam},glam};
 
-use crate::core::{toml_loader::Configuration,Event};
+use crate::core::{toml_loader::Configuration,Event, logger::debug};
 use super::scene::Scene;
 
 const BG_COLOR: Color = Color::new(0.0, 0.0, 0.0, 1.0);
 
 const TEXT_SIZE: f32 = 18.0;
+const TILE_SIZE: f32 = 32.0;
 
 pub struct Game {
     pub data: Box<Scene>,
@@ -48,14 +49,14 @@ impl Event for Game {
                     if button.1.clicked() {
                         match button.0 {
                             "Settings" => {
-                                println!("Settings");
+                                debug!("Settings");
                             },
                             "Quit" => {
-                                println!("Quit");
+                                debug!("Quit");
                                 std::process::exit(0);
                             },
                             "Exit" => {
-                                println!("Exit");
+                                debug!("Exit");
                                 self.running = false;
                             },
                             _ => {},
@@ -71,6 +72,18 @@ impl Event for Game {
     fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult {
         let mut canvas = graphics::Canvas::from_frame(ctx, BG_COLOR);
         canvas.draw(&self.gui, DrawParam::default().dest(glam::Vec2::ZERO));
+        //get all tiles in data.map.map
+        //scale each tile by self.configuration.settings.fit
+        let scale = if self.configuration.settings.fit.w as f32/self.configuration.settings.resolution.w as f32 > self.configuration.settings.fit.h as f32 /self.configuration.settings.resolution.h as f32 {
+            self.configuration.settings.fit.h as f32 /self.configuration.settings.resolution.h as f32
+        } else {
+            self.configuration.settings.fit.w as f32/self.configuration.settings.resolution.w as f32
+        };
+        for tile in self.data.map.as_mut().unwrap().map.iter() {
+            //use tile.0 as a coordinate of where to draw the tile
+            //use tile.1 as the tile to draw
+            //use scale to scale the tile
+        }
         canvas.finish(ctx)
     }
 

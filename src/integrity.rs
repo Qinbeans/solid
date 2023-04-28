@@ -3,6 +3,8 @@ use std::fs::{File, DirEntry};
 use std::io::Read;
 use sha2::{Sha256, Digest};
 
+use crate::core::logger::error;
+
 const IGNORES: [&str; 2] = [".DS_Store","checksum"];
 
 pub struct Integrity {
@@ -61,7 +63,7 @@ impl Integrity {
         let sum = hasher.finalize();
         let sum = format!("{:x}", sum);
         if self.expected != sum {
-            println!("Expected {}, got {}", self.expected, sum);
+            error!("Expected {}, got {}", self.expected, sum);
             return Err("Integrity check failed".to_string());
         }
         Ok(())

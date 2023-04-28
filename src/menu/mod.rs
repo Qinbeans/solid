@@ -3,7 +3,7 @@ use ggegui::{Gui};
 use ggez::{event::EventHandler, graphics::{self, Color, DrawParam},glam};
 use std::{path::{Path}, env::current_dir, fs::File, io::BufReader, io::Read};
 use crate::{core::{
-    toml_loader::{Configuration, TomlAsset}
+    toml_loader::{Configuration, TomlAsset}, logger::{error,debug}
 }, integrity::Integrity, game::configuration::Game};
 
 
@@ -61,7 +61,7 @@ impl Menu {
                     _ => panic!("Could not load configuration file!"),
                 }
             } else {
-                println!("{}", toml.err().unwrap());
+                error!("{}", toml.err().unwrap());
                 panic!("Could not load configuration file!");
             }
         };
@@ -88,6 +88,8 @@ impl Menu {
         #[cfg(not(debug_assertions))]
         let image_path = std::env::current_exe().unwrap().parent().unwrap().join("core").join("assets").join("images").join("background.png");
         
+        configuration.texture_map.load_image();
+
         Menu {
             gui: Gui::new(ctx),
             configuration,
@@ -118,7 +120,7 @@ impl EventHandler for Menu {
         let (width, height) = ctx.gfx.drawable_size();
         if width != self.configuration.settings.resolution.w as f32 || height != self.configuration.settings.resolution.h as f32 {
             if let Err(err) = ctx.gfx.set_drawable_size(self.configuration.settings.resolution.w as f32, self.configuration.settings.resolution.h as f32) {
-                println!("{}", err);
+                error!("{}", err);
             }
         }
         if self.event.is_none() {
@@ -140,18 +142,18 @@ impl EventHandler for Menu {
                     if button.1.clicked() {
                         match button.0 {
                             "Play" => {
-                                println!("Play");
+                                debug!("Play");
                                 let game = Game::new(ctx, self.configuration.clone());
                                 self.event = Some(Box::new(game));
                             },
                             "Load" => {
-                                println!("Load");
+                                debug!("Load");
                             },
                             "Settings" => {
-                                println!("Settings");
+                                debug!("Settings");
                             },
                             "Quit" => {
-                                println!("Quit");
+                                debug!("Quit");
                                 std::process::exit(0);
                             },
                             _ => {},
