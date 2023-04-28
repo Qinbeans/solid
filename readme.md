@@ -11,7 +11,7 @@ The game is made up of a few parts:
 
 ### Mods
 
-Mods is the idea where made to be data oriented and all any mod make has to do is list what they want the game to do.  There's some "programming" involved in the sence there are predefined functions that can be called, but the idea is that the game is made up of a bunch of mods that can be added and removed at will.
+Mods is the idea where made to be data oriented and all any mod make has to do is list what they want the game to do.  There's some "programming" involved in the sense there are predefined functions that can be called, but the idea is that the game is made up of a bunch of mods that can be added and removed at will.
 
 ### Logic
 

@@ -1,4 +1,6 @@
-use std::{path::PathBuf, io::read_to_string, collections::HashMap};
+use std::{path::PathBuf, collections::HashMap};
+use crate::core::logger::debug;
+
 use super::{data::{
     character::Character,
     class::Class,
@@ -77,6 +79,7 @@ pub struct Settings {
     pub window_mode: String,
     pub resolution: Size,
     pub keymap: KeyMap,
+    pub scale: f32,
 }
 
 //Overall configuration file
@@ -87,9 +90,15 @@ pub struct Configuration {
     pub texture_map: TextureMap,
     pub settings: Settings,
     #[serde(skip)]
-    pub sum: String,
+    pub sum: Vec<String>,
     #[serde(skip)]
     pub tex_map: HashMap<String, Rect>
+}
+
+pub enum OS {
+    Mac,
+    Windows,
+    Linux,
 }
 
 impl Configuration {
@@ -98,19 +107,39 @@ impl Configuration {
      *  or if files have been changed.  When testing/debugging make sure to update
      *  the checksum
      */
-    pub fn get_sum(&mut self, rel_path: PathBuf) {
+    pub fn retrieve_sum(&mut self, rel_path: PathBuf) {
         //open checksum file
-        let file = std::fs::File::open(rel_path.join(&self.checksum));
-        if let Err(err) = file {
-            panic!("Could not open checksum file: {}", err);
+        let file_string = {
+            if let Ok(ok) = std::fs::read_to_string(rel_path.join(self.checksum.clone())) {
+                debug!("Filename: {}", ok);
+                ok
+            } else {
+                String::new()
+            }
+        };
+        self.sum = {
+            if let Ok(ta) = toml::from_str::<TomlAsset>(&file_string) {
+                match ta {
+                    TomlAsset::Strings(strs) => {
+                        debug!("Strings: {:?}", strs);
+                        strs
+                    },
+                    _ => Vec::new(),
+                }
+            } else {
+                Vec::new()
+            }
         }
-        let file = file.unwrap();
-        //read checksum file
-        let res = read_to_string(file);
-        if let Err(err) = res {
-            panic!("Could not read checksum file: {}", err);
+    }
+
+    pub fn get_sum(&self) -> String {
+        if cfg!(target_os = "windows") {
+            self.sum[OS::Windows as usize].clone()
+        } else if cfg!(target_os = "macos") {
+            self.sum[OS::Mac as usize].clone()
+        } else {
+            self.sum[OS::Linux as usize].clone()
         }
-        self.sum = res.unwrap();
     }
 
     pub fn map_textures(&mut self) {
@@ -130,5 +159,6 @@ pub enum TomlAsset {
     Locations(Vec<Location>),
     Missions(Vec<Mission>),
     Mobs(Vec<Mob>),
-    Races(Vec<Race>)
+    Races(Vec<Race>),
+    Strings(Vec<String>),
 }
