@@ -17,9 +17,10 @@ use serde_with::serde_as;
 
 const DATADIR: &str = "core/data";
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Scene {
     pub map: Option<Map>,
+    pub camera: (f32, f32),
 }
 
 impl Scene {
@@ -201,22 +202,36 @@ impl Scene {
         };
 
         scene.map = Some(Map::new(config, cha, loc_map, class_map, effect_map, item_map, mission_map, mob_map, race_map));
-
+        scene.camera = (0.0,0.0);
         scene
     }
+
+    pub fn set_camera(&mut self, pos: (f32, f32)) {
+        self.camera = pos;
+    }
+
+    pub fn move_vert(&mut self, amount: f32) {
+        self.camera.1 += amount;
+    }
+
+    pub fn move_horiz(&mut self, amount: f32) {
+        self.camera.0 += amount;
+    }
+
 }
 
 impl Default for Scene {
     fn default() -> Self {
         Self {
             map: None,
+            camera: (0.0,0.0)
         }
     }
 }
 
 
 #[serde_as]
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone)]
 pub struct Map {
     //includes locations, items, mobs, effects
     pub locations: HashMap<String, Location>,
@@ -248,7 +263,8 @@ impl Map {
         map.size = configs.settings.size;
         map.missions = mission_map.clone();
         //create a perlin noise map
-        let fbm = Fbm::<Perlin>::new(0);
+        let time = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_secs();
+        let fbm = Fbm::<Perlin>::new(time as u32);
         let raw_map = PlaneMapBuilder::<_, 2>::new(&fbm)
           .set_size(map.size.w as usize, map.size.h as usize)
           .set_x_bounds(0.0, 1.0)
@@ -295,6 +311,8 @@ impl Map {
                 map.map.entry(Vector2T::new(x, y)).or_insert(value);
             }
         }
+
+        debug!("map: {:?}",map.map);
     
         //initialize randomizer
         let mut rng = rand::thread_rng();

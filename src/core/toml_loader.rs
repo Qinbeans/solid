@@ -9,8 +9,12 @@ use super::{data::{
     mission::Mission,
     mob::Mob,
     race::Race
-}, functions::Vector4T};
+}, functions::{Vector4T, Vector2T}};
+use image::GenericImage;
 use serde::{Serialize, Deserialize};
+
+#[allow(dead_code)]
+const TILE_SIZE: f32 = 32.0;
 
 //Position and size of a texture in a texture map
 #[derive(Deserialize, Serialize, Clone, Debug)]
@@ -46,7 +50,7 @@ pub struct TextureMap {
     pub tiles: Vec<String>,
     pub textures: Vec<Texture>,
     #[serde(skip)]
-    pub file: Vec<u8>,
+    pub image_buf: image::ImageBuffer<image::Rgba<u8>, Vec<u8>>,
 }
 
 impl TextureMap {
@@ -59,7 +63,8 @@ impl TextureMap {
         let mut buf_reader = std::io::BufReader::new(raw_file);
         let mut buf = Vec::new();
         buf_reader.read_to_end(&mut buf).unwrap();
-        self.file = buf;
+        let img = image::load_from_memory(&buf).unwrap();
+        self.image_buf = img.to_rgba8();
     }
 }
 
@@ -93,6 +98,7 @@ pub struct Settings {
     pub size: Size,
     pub window_mode: String,
     pub resolution: Size,
+    //refers to how many tiles fit on the screen, this should always be met
     pub fit: Size,
     pub keymap: KeyMap,
     pub scale: f32,
@@ -162,6 +168,52 @@ impl Configuration {
         for texture in &self.texture_map.textures {
             self.tex_map.insert(texture.id.clone(), texture.rect.clone());
         }
+    }
+
+    /**
+     * Creates a buffer in which we store the stitched map around the camera
+     */
+    pub fn build_map_as_image(&mut self, camera: (f32, f32), map: HashMap<Vector2T<u32>,u32>) -> Vec<u8> {
+        let size: (u32, u32) = (self.settings.resolution.w, self.settings.resolution.h);
+        let mut result: image::ImageBuffer<image::Rgba<u8>, Vec<u8>> = image::ImageBuffer::new(size.0, size.1);
+        
+        //Use self.texture_map.image_buf to build the image
+        //go through each tile and scale it to "fit" the screen size
+        //the tile scale is derived from self.settings.fit
+        let scale_size = {
+            let width = size.0 / self.settings.fit.w;
+            let height = size.1 / self.settings.fit.h;
+            //choose the smaller of the two
+            if width < height {
+                width
+            } else {
+                height
+            }
+        };
+
+        let scale_factor = (scale_size as f32)/(TILE_SIZE as f32);
+
+        //enumerate each tile to its appropriate location on the texture map
+        //could use rayon to parallelize this
+        for (tile_loc, tile_enum) in map {
+            let x = (tile_loc.x as f32 * scale_size as f32) as i64;
+            let y = (tile_loc.y as f32 * scale_size as f32) as i64;
+            //if the tile exists outside the bounds of the fit centered around the camera, skip it
+            if x < (camera.0 as i64 - (self.settings.fit.w as i64 / 2)) || x > (camera.0 as i64 + (self.settings.fit.w as i64 / 2)) {
+                continue;
+            }
+            if y < (camera.1 as i64 - (self.settings.fit.h as i64 / 2)) || y > (camera.1 as i64 + (self.settings.fit.h as i64 / 2)) {
+                continue;
+            }
+            let tile_name = self.texture_map.tiles[tile_enum as usize].clone();
+            let tile = self.tex_map.get(&tile_name).unwrap();
+            let sub = self.texture_map.image_buf.sub_image(tile.x as u32, tile.y as u32, tile.w as u32, tile.h as u32).to_image();
+            let tile_img = image::imageops::resize(&sub, (tile.w * scale_factor) as u32, (tile.h * scale_factor) as u32, image::imageops::FilterType::Nearest);
+            image::imageops::overlay(&mut result, &tile_img, x, y);
+        }
+        let mut writer:std::io::Cursor<Vec<_>> = std::io::Cursor::new(Vec::new());
+        result.write_to(&mut writer, image::ImageFormat::Png).unwrap();
+        writer.into_inner()
     }
 }
 

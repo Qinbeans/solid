@@ -2,13 +2,12 @@ use egui::{RichText, Button, Color32, Widget};
 use ggegui::{Gui};
 use ggez::{graphics::{self, Color, DrawParam},glam};
 
-use crate::core::{toml_loader::Configuration,Event, logger::debug};
+use crate::core::{toml_loader::Configuration,Event, logger::{debug, error}};
 use super::scene::Scene;
 
 const BG_COLOR: Color = Color::new(0.0, 0.0, 0.0, 1.0);
 
 const TEXT_SIZE: f32 = 18.0;
-const TILE_SIZE: f32 = 32.0;
 
 pub struct Game {
     pub data: Box<Scene>,
@@ -19,8 +18,11 @@ pub struct Game {
 
 impl Game {
     pub fn new(ctx: &mut ggez::Context, config: Box<Configuration>) -> Game {
+        let mut scene = Box::new(Scene::new(*(config.clone())));
+        let camera: (f32, f32) = (config.settings.size.w as f32/2.0, config.settings.size.h as f32/2.0);
+        scene.set_camera(camera);
         Game {
-            data: Box::new(Scene::new(*(config.clone()))),
+            data: scene,
             configuration: config,
             gui: Gui::new(ctx),
             running: true,
@@ -64,26 +66,38 @@ impl Event for Game {
                     }
                 }
             });
-        
+
+        //Temporary movement, set to appropriate movement amount later
+        if ctx.keyboard.is_key_pressed(ggez::input::keyboard::KeyCode::W) {
+            self.data.move_vert(1.0);
+        }else if ctx.keyboard.is_key_pressed(ggez::input::keyboard::KeyCode::S) {
+            self.data.move_vert(-1.0);
+        }
+        if ctx.keyboard.is_key_pressed(ggez::input::keyboard::KeyCode::A) {
+            self.data.move_horiz(-1.0);
+        }else if ctx.keyboard.is_key_pressed(ggez::input::keyboard::KeyCode::D) {
+            self.data.move_horiz(1.0);
+        }
+
         self.gui.update(ctx);
         Ok(())
     }
 
     fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult {
         let mut canvas = graphics::Canvas::from_frame(ctx, BG_COLOR);
-        canvas.draw(&self.gui, DrawParam::default().dest(glam::Vec2::ZERO));
         //get all tiles in data.map.map
         //scale each tile by self.configuration.settings.fit
-        let scale = if self.configuration.settings.fit.w as f32/self.configuration.settings.resolution.w as f32 > self.configuration.settings.fit.h as f32 /self.configuration.settings.resolution.h as f32 {
-            self.configuration.settings.fit.h as f32 /self.configuration.settings.resolution.h as f32
+        if let Some(val) = &self.data.map {
+            let raw_png = self.configuration.build_map_as_image(self.data.camera, val.map.clone());
+            if let Ok(ok) = graphics::Image::from_bytes(ctx, &raw_png) {
+                canvas.draw(&ok, DrawParam::default().dest(glam::Vec2::ZERO));
+            } else {
+                error!("Failed to load image");
+            };
         } else {
-            self.configuration.settings.fit.w as f32/self.configuration.settings.resolution.w as f32
-        };
-        for tile in self.data.map.as_mut().unwrap().map.iter() {
-            //use tile.0 as a coordinate of where to draw the tile
-            //use tile.1 as the tile to draw
-            //use scale to scale the tile
+            error!("Failed to load map");
         }
+        canvas.draw(&self.gui, DrawParam::default().dest(glam::Vec2::ZERO));
         canvas.finish(ctx)
     }
 
