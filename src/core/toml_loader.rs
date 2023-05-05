@@ -51,6 +51,8 @@ pub struct TextureMap {
     pub textures: Vec<Texture>,
     #[serde(skip)]
     pub image_buf: image::ImageBuffer<image::Rgba<u8>, Vec<u8>>,
+    #[serde(skip)]
+    pub tile_buf: Vec<image::ImageBuffer<image::Rgba<u8>, Vec<u8>>>,
 }
 
 impl TextureMap {
@@ -65,6 +67,11 @@ impl TextureMap {
         buf_reader.read_to_end(&mut buf).unwrap();
         let img = image::load_from_memory(&buf).unwrap();
         self.image_buf = img.to_rgba8();
+        for tile in &self.tiles {
+            let tile_shape = self.textures.iter().find(|x| x.id == *tile).unwrap().rect.clone();
+            let tile_buf = self.image_buf.sub_image(tile_shape.x as u32, tile_shape.y as u32, tile_shape.w as u32, tile_shape.h as u32).to_image();
+            self.tile_buf.push(tile_buf);
+        }
     }
 }
 
@@ -191,8 +198,6 @@ impl Configuration {
             }
         };
 
-        let scale_factor = (scale_size as f32)/(TILE_SIZE as f32);
-
         //enumerate each tile to its appropriate location on the texture map
         //could use rayon to parallelize this
         for (tile_loc, tile_enum) in map {
@@ -205,11 +210,9 @@ impl Configuration {
             if y < (camera.1 as i64 - (self.settings.fit.h as i64 / 2)) || y > (camera.1 as i64 + (self.settings.fit.h as i64 / 2)) {
                 continue;
             }
-            let tile_name = self.texture_map.tiles[tile_enum as usize].clone();
-            let tile = self.tex_map.get(&tile_name).unwrap();
-            let sub = self.texture_map.image_buf.sub_image(tile.x as u32, tile.y as u32, tile.w as u32, tile.h as u32).to_image();
-            let tile_img = image::imageops::resize(&sub, (tile.w * scale_factor) as u32, (tile.h * scale_factor) as u32, image::imageops::FilterType::Nearest);
-            image::imageops::overlay(&mut result, &tile_img, x, y);
+            let tile_buf = self.texture_map.tile_buf[tile_enum as usize].clone();
+            let tile_buf = image::imageops::resize(&tile_buf, scale_size, scale_size, image::imageops::FilterType::Nearest);
+            image::imageops::overlay(&mut result, &tile_buf, x, y);
         }
         let mut writer:std::io::Cursor<Vec<_>> = std::io::Cursor::new(Vec::new());
         result.write_to(&mut writer, image::ImageFormat::Png).unwrap();

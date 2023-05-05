@@ -229,7 +229,6 @@ impl Default for Scene {
     }
 }
 
-
 #[serde_as]
 #[derive(Serialize, Deserialize, Clone)]
 pub struct Map {
@@ -277,7 +276,7 @@ impl Map {
         for y in 0..map.size.h {
             for x in 0..map.size.w {
                 //can get value from map use get_value
-                let value = ((raw_map.get_value(x as usize, y as usize) + 2.0) * 10.0) as u32 % configs.texture_map.tiles.len() as u32;
+                let value = ((raw_map.get_value(x as usize, y as usize) + 2.0) * 10.0) as u32 % (configs.texture_map.tiles.len() as u32 - 1);
                 let group_name = if let Some(val) = configs.texture_map.tiles.get(value as usize) {
                     val.clone()
                 } else {
@@ -312,7 +311,7 @@ impl Map {
             }
         }
 
-        debug!("map: {:?}",map.map);
+        debug!("{:?}",map);
     
         //initialize randomizer
         let mut rng = rand::thread_rng();
