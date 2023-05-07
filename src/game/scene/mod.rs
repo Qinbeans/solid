@@ -3,21 +3,19 @@ pub mod entity;
 
 use std::{collections::HashMap, fmt::{Debug, Formatter}};
 
-use crate::core::{logger::{debug, error}};
+use crate::core::{logger::{error}, data::dungeon::{Dungeon, DungeonChunk}, toml_loader};
 
 use self::entity::{Character};
+use rand::Rng;
 
-use crate::core::{toml_loader::{Size, TomlAsset, Configuration}, data, functions::{Vector4T, Vector2D, Vector2T}};
-use noise::{Fbm, Perlin};
-use noise::utils::{NoiseMapBuilder, PlaneMapBuilder};
+use crate::core::{toml_loader::{Size, TomlAsset, Configuration}, data};
 use serde::{Serialize, Deserialize};
 use location::Location;
-use rand::Rng;
 use serde_with::serde_as;
 
 const DATADIR: &str = "core/data";
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, Default)]
 pub struct Scene {
     pub map: Option<Map>,
     pub camera: (f32, f32),
@@ -30,7 +28,7 @@ impl Scene {
         let mut class_map: HashMap<String, data::class::Class> = HashMap::new();
         let mut effect_map: HashMap<String, data::effect::Effect> = HashMap::new();
         let mut item_map: HashMap<String, data::item::Item> = HashMap::new();
-        let mut loc_map: HashMap<String, data::location::Location> = HashMap::new();
+        let mut _locs: Vec<data::location::Location> = Vec::new();
         let mut mission_map: HashMap<String, data::mission::Mission> = HashMap::new();
         let mut mob_map: HashMap<String, data::mob::Mob> = HashMap::new();
         let mut race_map: HashMap<String, data::race::Race> = HashMap::new();
@@ -108,9 +106,7 @@ impl Scene {
         if let Ok(ok) = toml {
             match ok {
                 TomlAsset::Locations(locations) => {
-                    for loc in locations {
-                        loc_map.insert(loc.id.clone(), loc);
-                    }
+                    _locs = locations;
                 },
                 _ => panic!("Could not load locations file!"),
             }
@@ -200,8 +196,26 @@ impl Scene {
             error!("{}", toml.err().unwrap());
             panic!("Could not load character file!");
         };
-
-        scene.map = Some(Map::new(config, cha, loc_map, class_map, effect_map, item_map, mission_map, mob_map, race_map));
+        file_string = {
+            if let Ok(ok) = std::fs::read_to_string(format!("{}/{}", DATADIR, "dungeon.toml")) {
+                ok
+            } else {
+                String::new()
+            }
+        };
+        toml = toml::from_str::<TomlAsset>(&file_string);
+        let dungeon: toml_loader::Dungeon = if let Ok(ok) = toml {
+            match ok {
+                TomlAsset::Dungeon(raw_dungeon) => {
+                    raw_dungeon
+                },
+                _ => panic!("Could not load dungeon file!"),
+            }
+        } else {
+            error!("{}", toml.err().unwrap());
+            panic!("Could not load dungeon file!");
+        };
+        scene.map = Some(Map::new(config, cha, _locs, class_map, effect_map, item_map, mission_map, mob_map, race_map, dungeon));
         scene.camera = (0.0,0.0);
         scene
     }
@@ -220,17 +234,9 @@ impl Scene {
 
 }
 
-impl Default for Scene {
-    fn default() -> Self {
-        Self {
-            map: None,
-            camera: (0.0,0.0)
-        }
-    }
-}
 
 #[serde_as]
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Serialize, Deserialize, Clone, Default)]
 pub struct Map {
     //includes locations, items, mobs, effects
     pub locations: HashMap<String, Location>,
@@ -238,9 +244,9 @@ pub struct Map {
     pub missions: HashMap<String, data::mission::Mission>,
     //includes character, race, class
     pub character: Option<Character>,
-    #[serde_as(as = "Vec<(_,_)>")]
-    pub map: HashMap<Vector2T<u32>,u32>,
     pub size: Size,
+    pub dungeon: Dungeon,
+    pub dungeon_list: Vec<DungeonChunk>,
 }
 
 impl Debug for Map {
@@ -254,67 +260,13 @@ impl Debug for Map {
 }
 
 impl Map {
-    pub fn new(configs: Configuration, character: data::character::Character, mut loc_map: HashMap<String, data::location::Location>, class_map: HashMap<String, data::class::Class>, effect_map: HashMap<String, data::effect::Effect>, item_map: HashMap<String, data::item::Item>, mission_map: HashMap<String, data::mission::Mission>, mob_map: HashMap<String, data::mob::Mob>, race_map: HashMap<String, data::race::Race>) -> Self {
+    pub fn new(configs: Configuration, character: data::character::Character, locs: Vec<data::location::Location>, class_map: HashMap<String, data::class::Class>, effect_map: HashMap<String, data::effect::Effect>, item_map: HashMap<String, data::item::Item>, mission_map: HashMap<String, data::mission::Mission>, mob_map: HashMap<String, data::mob::Mob>, race_map: HashMap<String, data::race::Race>, dungeon: toml_loader::Dungeon) -> Self {
         let mut map = Self::default();
         let mut items: HashMap<String, entity::Item> = HashMap::new();
         let mut mobs: HashMap<String, entity::Mob> = HashMap::new();
-
-        map.size = configs.settings.size;
+        map.dungeon_list = dungeon.chunks.clone();
+        map.size = configs.settings.size.clone();
         map.missions = mission_map.clone();
-        //create a perlin noise map
-        let time = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_secs();
-        let fbm = Fbm::<Perlin>::new(time as u32);
-        let raw_map = PlaneMapBuilder::<_, 2>::new(&fbm)
-          .set_size(map.size.w as usize, map.size.h as usize)
-          .set_x_bounds(0.0, 1.0)
-          .set_y_bounds(0.0, 1.0)
-          .build();
-        //find groupings of similar values using a hashmap of vectors
-        let mut groups: HashMap<String, Vec<Vector4T<u32>>> = HashMap::new();
-        //group neighbors by adding the vectors together
-        //add tiles with similar values to the same group
-        for y in 0..map.size.h {
-            for x in 0..map.size.w {
-                //can get value from map use get_value
-                let value = ((raw_map.get_value(x as usize, y as usize) + 2.0) * 10.0) as u32 % (configs.texture_map.tiles.len() as u32 - 1);
-                let group_name = if let Some(val) = configs.texture_map.tiles.get(value as usize) {
-                    val.clone()
-                } else {
-                    panic!("Could not find tile for value: {}", value);
-                };
-                //check if the group exists
-                if let Some(group) = groups.get_mut(&group_name) {
-                    //check if the current tile is a neighbor of the last tile in the group
-                    //if it is, add the last vector4t to the current vector4t
-                    //else, add the current vector4t to the group
-                    //go through the group and check if the current tile is a neighbor of any of the tiles in the group
-                    let mut neighbor = false;
-                    for tile in group.iter_mut() {
-                        if (x == tile.x || x == tile.z) && (y == tile.y || y == tile.w) {
-                            neighbor = true;
-                            if x == tile.z {
-                                tile.z += 1;
-                            }
-                            if y == tile.w {
-                                tile.w += 1;
-                            }
-                        }
-                    }
-                    if !neighbor {
-                        group.push(Vector4T::new(x, y, x + 1, y + 1));
-                    }
-                } else {
-                    //if it doesn't, create a new group and add the current tile to it
-                    groups.insert(group_name.clone(), vec![Vector4T::new(x, y, x + 1, y + 1)]);
-                }
-                map.map.entry(Vector2T::new(x, y)).or_insert(value);
-            }
-        }
-
-        debug!("{:?}",map);
-    
-        //initialize randomizer
-        let mut rng = rand::thread_rng();
 
         //create a map for items in persistent memory
         for item in item_map.values() {
@@ -332,46 +284,24 @@ impl Map {
             mobs.insert(mob.id.clone(), entity::Mob::new(mob.clone(), rect, items.clone()));
         }
 
-        //go through each location and find groups of tiles that match the location
-        loc_map.retain(|_,loc| {
-            let loc_groups = groups.get(&loc.texture).unwrap();
-            let required_size = loc.size.clone();
-            //check if any of the groups are large enough to fit the location
-            for (_, area) in loc_groups.iter().enumerate() {
-                if area.size() >= required_size {
-                    //choose somewhere in the group to place the location
-                    //subtract the required size from the group size to prevent the location from going off the map
-                    if area.z-required_size.w <= area.x || area.w-required_size.h <= area.y {
-                        debug!("Location {} is too large for the tile", loc.id);
-                        continue;
-                    }
-                    let x = rng.gen_range(area.x..area.z-required_size.w) as f64;
-                    let y = rng.gen_range(area.y..area.w-required_size.h) as f64;
-                    let entity = entity::Entity::Mob(mobs.get(&loc.spawn.entity).unwrap().clone());
-                    map.locations.insert(loc.id.clone(), location::Location::new(loc.clone(), Vector2D {x,y}, entity));
-                }
-            }
-            true
-        });
+        let player_spawn = Location::new(locs[0].clone(), None);
+        //create dungeon
+        map.dungeon = Dungeon::new((configs.settings.size.w,configs.settings.size.h), dungeon.default_chunk, dungeon.chunks, player_spawn);
 
-        //missions are kinda loosely used and defined
-        //they are used to spawn mobs in locations
+        let rooms = map.dungeon.clone().rooms();
+
+        //create locations
+        for room in rooms {
+            //skip the first location, since it's for the player
+            let choice = rand::thread_rng().gen_range(1..locs.len());
+            let loc = locs[choice].clone();
+            let entity = entity::Entity::Mob(mobs.get(&loc.clone().spawn.unwrap().entity).unwrap().clone());
+            map.dungeon.add_location(room,Location::new(loc, Some(entity)));
+        }
 
         //create character
         map.character = Some(entity::Character::new(character, items, class_map, race_map));
 
         map
-    }
-}
-
-impl Default for Map {
-    fn default() -> Self {
-        Self {
-            locations: HashMap::new(),
-            missions: HashMap::new(),
-            character: None,
-            map: HashMap::new(),
-            size: Size::default(),
-        }
     }
 }

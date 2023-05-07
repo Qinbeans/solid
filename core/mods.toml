@@ -43,7 +43,7 @@ textures=[
 # tiles for the viewport
 window_mode = "windowed"
 resolution = {w=1920,h=1080}
-size = {w=1000,h=500}
-fit = {w=60,h=33}
+size = {w=500,h=500}
+fit = {w=6,h=3}
 scale = 2
 keymap = {up="w",down="s",left="a",right="d",follow="cursor",interact="f",inventory="i",menu="escape",attack="mouse1",use="mouse2",map="m"}

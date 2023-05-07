@@ -9,6 +9,7 @@ pub mod location;
 pub mod mission;
 pub mod mob;
 pub mod race;
+pub mod dungeon;
 
 #[derive(Deserialize, Clone)]
 pub enum Entity {

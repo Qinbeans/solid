@@ -1,7 +1,5 @@
 use serde::{Deserialize, Serialize};
 
-use crate::core::toml_loader::Size;
-
 #[derive(Deserialize, Serialize, Clone, Debug)]
 pub enum Trigger {
     OnEnter(i32),
@@ -22,10 +20,8 @@ pub struct Spawn {
 pub struct Location {
     pub id: String,
     pub name: String,
-    pub texture: String,
-    pub size: Size,
     pub chance: f32,
     pub radius: f32,
     pub description: String,
-    pub spawn: Spawn, 
+    pub spawn: Option<Spawn>, 
 }

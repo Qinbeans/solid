@@ -17,8 +17,9 @@ pub struct Game {
 }
 
 impl Game {
-    pub fn new(ctx: &mut ggez::Context, config: Box<Configuration>) -> Game {
+    pub fn new(ctx: &mut ggez::Context, mut config: Box<Configuration>) -> Game {
         let mut scene = Box::new(Scene::new(*(config.clone())));
+        config.load_chunks(scene.clone().map.unwrap().dungeon_list.clone());
         let camera: (f32, f32) = (config.settings.size.w as f32/2.0, config.settings.size.h as f32/2.0);
         scene.set_camera(camera);
         Game {
@@ -88,7 +89,7 @@ impl Event for Game {
         //get all tiles in data.map.map
         //scale each tile by self.configuration.settings.fit
         if let Some(val) = &self.data.map {
-            let raw_png = self.configuration.build_map_as_image(self.data.camera, val.map.clone());
+            let raw_png = self.configuration.build_map_as_image(self.data.camera, val.dungeon.clone());
             if let Ok(ok) = graphics::Image::from_bytes(ctx, &raw_png) {
                 canvas.draw(&ok, DrawParam::default().dest(glam::Vec2::ZERO));
             } else {

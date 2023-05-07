@@ -2,8 +2,6 @@
 //https://docs.rs/noise/latest/noise/
 use serde::{Deserialize, Serialize};
 
-use super::toml_loader::Size;
-
 //store results into a vector
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -17,20 +15,6 @@ impl Default for Vector2D {
         Vector2D {
             x: 0.0,
             y: 0.0
-        }
-    }
-}
-#[derive(Deserialize, Serialize, Clone, Default, Debug, PartialEq, PartialOrd, Eq, Hash)]
-pub struct Vector2T<T>{
-    pub x: T,
-    pub y: T,
-}
-
-impl <T> Vector2T<T> {
-    pub fn new(x: T, y: T) -> Self {
-        Vector2T {
-            x,
-            y,
         }
     }
 }
@@ -79,25 +63,6 @@ pub struct Vector4T<T> {
     pub w: T,
 }
 
-impl <T> Vector4T<T> {
-    pub fn new(x: T, y: T, z: T, w: T) -> Self {
-        Vector4T {
-            x,
-            y,
-            z,
-            w,
-        }
-    }
-}
-
-impl Vector4T<u32> {
-    pub fn size(&self) -> Size {
-        Size {
-            w: self.z - self.x,
-            h: self.w - self.y,
-        }
-    }
-}
 //allow adding vectors
 impl <T> std::ops::Add for Vector4T<T>
 where

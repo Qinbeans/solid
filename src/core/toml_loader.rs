@@ -8,14 +8,14 @@ use super::{data::{
     location::Location,
     mission::Mission,
     mob::Mob,
-    race::Race
-}, functions::{Vector4T, Vector2T}};
+    race::Race, self
+}, functions::{Vector4T}, logger::error};
 use image::GenericImage;
 use serde::{Serialize, Deserialize};
 
 #[allow(dead_code)]
 const TILE_SIZE: f32 = 32.0;
-
+const CHUNK_SIZE: f32 = 10.0;
 //Position and size of a texture in a texture map
 #[derive(Deserialize, Serialize, Clone, Debug)]
 pub struct Rect {
@@ -53,6 +53,8 @@ pub struct TextureMap {
     pub image_buf: image::ImageBuffer<image::Rgba<u8>, Vec<u8>>,
     #[serde(skip)]
     pub tile_buf: Vec<image::ImageBuffer<image::Rgba<u8>, Vec<u8>>>,
+    #[serde(skip)]
+    pub chunk_buf: Vec<image::ImageBuffer<image::Rgba<u8>, Vec<u8>>>,
 }
 
 impl TextureMap {
@@ -140,7 +142,6 @@ impl Configuration {
         //open checksum file
         let file_string = {
             if let Ok(ok) = std::fs::read_to_string(rel_path.join(self.checksum.clone())) {
-                debug!("Filename: {}", ok);
                 ok
             } else {
                 String::new()
@@ -175,12 +176,28 @@ impl Configuration {
         for texture in &self.texture_map.textures {
             self.tex_map.insert(texture.id.clone(), texture.rect.clone());
         }
+        self.texture_map.load_image();
+    }
+
+    pub fn load_chunks(&mut self, dungeons: Vec<data::dungeon::DungeonChunk>) {
+        for chunk in dungeons {
+            let mut chunk_buf = image::ImageBuffer::new(CHUNK_SIZE as u32, CHUNK_SIZE as u32);
+            for (y, rows) in chunk.matrix.iter().enumerate() {
+                for (x, tile) in rows.iter().enumerate() {
+                    let tile_buf = self.texture_map.tile_buf[tile.clone() as usize].clone();
+                    let tile_buf = image::imageops::resize(&tile_buf, TILE_SIZE as u32, TILE_SIZE as u32, image::imageops::FilterType::Nearest);
+                    //overlay tile_buf onto chunk_buf
+                    image::imageops::overlay(&mut chunk_buf, &tile_buf, x as i64 * TILE_SIZE as i64, y as i64 * TILE_SIZE as i64);
+                }
+            }
+            self.texture_map.chunk_buf.push(chunk_buf);
+        }
     }
 
     /**
      * Creates a buffer in which we store the stitched map around the camera
      */
-    pub fn build_map_as_image(&mut self, camera: (f32, f32), map: HashMap<Vector2T<u32>,u32>) -> Vec<u8> {
+    pub fn build_map_as_image(&mut self, camera: (f32, f32), dungeon: data::dungeon::Dungeon) -> Vec<u8> {
         let size: (u32, u32) = (self.settings.resolution.w, self.settings.resolution.h);
         let mut result: image::ImageBuffer<image::Rgba<u8>, Vec<u8>> = image::ImageBuffer::new(size.0, size.1);
         
@@ -192,32 +209,56 @@ impl Configuration {
             let height = size.1 / self.settings.fit.h;
             //choose the smaller of the two
             if width < height {
-                width
+                width * CHUNK_SIZE as u32
             } else {
-                height
+                height * CHUNK_SIZE as u32
             }
         };
 
-        //enumerate each tile to its appropriate location on the texture map
-        //could use rayon to parallelize this
-        for (tile_loc, tile_enum) in map {
-            let x = (tile_loc.x as f32 * scale_size as f32) as i64;
-            let y = (tile_loc.y as f32 * scale_size as f32) as i64;
-            //if the tile exists outside the bounds of the fit centered around the camera, skip it
-            if x < (camera.0 as i64 - (self.settings.fit.w as i64 / 2)) || x > (camera.0 as i64 + (self.settings.fit.w as i64 / 2)) {
-                continue;
+        // let tile_buf = self.texture_map.tile_buf[tile_enum as usize].clone();
+        // let tile_buf = image::imageops::resize(&tile_buf, scale_size, scale_size, image::imageops::FilterType::Nearest);
+        // image::imageops::overlay(&mut result, &tile_buf, x, y);
+
+        // find where to start drawing the dungeon
+        //  each tile is 32x32
+        //  each chunk is 10x10 tiles
+        //  we fit as many chunks as settings.fit allows on the screen with the rest being cut off
+        
+        let chunk_size = (TILE_SIZE * CHUNK_SIZE, TILE_SIZE * CHUNK_SIZE);
+
+        //camera is in pixels, we need to convert it to chunks
+        let start_x = (camera.0 / chunk_size.0) as u32;
+        let start_y = (camera.1 / chunk_size.1) as u32;
+        let end_x = start_x + self.settings.fit.w;
+        let end_y = start_y + self.settings.fit.h;
+
+        //draw the dungeon
+        for x in start_x..end_x {
+            for y in start_y..end_y {
+                let chunk = if let Some(chunk) = dungeon.get_chunk((x, y)) {
+                    chunk.id
+                } else {
+                    error!("Chunk ({}, {}) not found", x, y);
+                    continue;
+                };
+                let chunk_buf = self.texture_map.chunk_buf[chunk as usize].clone();
+                let chunk_buf = image::imageops::resize(&chunk_buf, scale_size, scale_size, image::imageops::FilterType::Nearest);
+                image::imageops::overlay(&mut result, &chunk_buf, ((x - start_x) as f32 * chunk_size.0) as i64, ((y - start_y) as f32 * chunk_size.1) as i64);
             }
-            if y < (camera.1 as i64 - (self.settings.fit.h as i64 / 2)) || y > (camera.1 as i64 + (self.settings.fit.h as i64 / 2)) {
-                continue;
-            }
-            let tile_buf = self.texture_map.tile_buf[tile_enum as usize].clone();
-            let tile_buf = image::imageops::resize(&tile_buf, scale_size, scale_size, image::imageops::FilterType::Nearest);
-            image::imageops::overlay(&mut result, &tile_buf, x, y);
         }
+
         let mut writer:std::io::Cursor<Vec<_>> = std::io::Cursor::new(Vec::new());
         result.write_to(&mut writer, image::ImageFormat::Png).unwrap();
         writer.into_inner()
     }
+}
+
+#[derive(Deserialize, Serialize, Clone)]
+pub struct Dungeon {
+    #[serde(alias="default")]
+    pub default_chunk: u16,
+    pub net_weight: u16,
+    pub chunks: Vec<super::data::dungeon::DungeonChunk>,
 }
 
 #[derive(Deserialize)]
@@ -232,4 +273,5 @@ pub enum TomlAsset {
     Mobs(Vec<Mob>),
     Races(Vec<Race>),
     Strings(Vec<String>),
+    Dungeon(Dungeon),
 }

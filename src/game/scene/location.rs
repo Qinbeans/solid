@@ -1,6 +1,6 @@
 use serde::{Serialize, Deserialize};
 
-use crate::core::{functions::Vector2D, toml_loader::Size, data::location::Trigger, data::location};
+use crate::core::{data::location::Trigger, data::location};
 
 use super::entity::Entity;
 
@@ -34,26 +34,25 @@ impl Spawn {
 pub struct Location {
     pub id: String,
     pub name: String,
-    //The scene processes and finds the location using context from the data Location 
-    pub position: Vector2D,
-    pub size: Size,
     pub chance: f32,
     pub radius: f32,
     pub description: String,
-    pub spawn: Spawn,
+    pub spawn: Option<Spawn>,
 }
 
 impl Location {
-    pub fn new(loc: location::Location, position: Vector2D, entity: Entity) -> Self {
+    pub fn new(loc: location::Location, entity: Option<Entity>) -> Self {
+        let spawn = match loc.spawn {
+            Some(spawn) => Some(Spawn::new(entity.unwrap(), spawn.trigger, spawn.interval, spawn.chance, spawn.uses, spawn.auto)),
+            None => None,
+        };
         Self {
             id: loc.id,
             name: loc.name,
-            position,
-            size: loc.size,
             chance: loc.chance,
             radius: loc.radius,
             description: loc.description,
-            spawn: Spawn::new(entity, loc.spawn.trigger, loc.spawn.interval, loc.spawn.chance, loc.spawn.uses, loc.spawn.auto),
+            spawn: spawn,
         }
     }
 }

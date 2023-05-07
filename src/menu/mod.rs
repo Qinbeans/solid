@@ -87,8 +87,6 @@ impl Menu {
         let image_path = current_dir().unwrap().join("core").join("assets").join("images").join("background.png");
         #[cfg(not(debug_assertions))]
         let image_path = std::env::current_exe().unwrap().parent().unwrap().join("core").join("assets").join("images").join("background.png");
-        
-        configuration.texture_map.load_image();
 
         Menu {
             gui: Gui::new(ctx),
@@ -143,6 +141,7 @@ impl EventHandler for Menu {
                         match button.0 {
                             "Play" => {
                                 debug!("Play");
+                                //within the context of *this* scene, the configs can be changed
                                 let game = Game::new(ctx, self.configuration.clone());
                                 self.event = Some(Box::new(game));
                             },
