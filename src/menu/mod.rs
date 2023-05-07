@@ -81,7 +81,7 @@ impl Menu {
         if let Err(err) = res {
             panic!("Integrity check failed: {}", err);
         }
-
+        configuration.settings.set_render_scale();
         configuration.map_textures();
         #[cfg(debug_assertions)]
         let image_path = current_dir().unwrap().join("core").join("assets").join("images").join("background.png");

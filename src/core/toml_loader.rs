@@ -9,13 +9,15 @@ use super::{data::{
     mission::Mission,
     mob::Mob,
     race::Race, self
-}, functions::{Vector4T}, logger::error};
+}, functions::{Vector4T}};
+use ggez::graphics;
 use image::GenericImage;
 use serde::{Serialize, Deserialize};
 
 #[allow(dead_code)]
 const TILE_SIZE: f32 = 32.0;
 const CHUNK_SIZE: f32 = 10.0;
+
 //Position and size of a texture in a texture map
 #[derive(Deserialize, Serialize, Clone, Debug)]
 pub struct Rect {
@@ -54,7 +56,7 @@ pub struct TextureMap {
     #[serde(skip)]
     pub tile_buf: Vec<image::ImageBuffer<image::Rgba<u8>, Vec<u8>>>,
     #[serde(skip)]
-    pub chunk_buf: Vec<image::ImageBuffer<image::Rgba<u8>, Vec<u8>>>,
+    pub chunk_buf: Vec<graphics::Image>,
 }
 
 impl TextureMap {
@@ -111,6 +113,28 @@ pub struct Settings {
     pub fit: Size,
     pub keymap: KeyMap,
     pub scale: f32,
+    #[serde(skip)]
+    pub render_scale: f32,
+}
+
+impl Settings {
+    pub fn set_render_scale(&mut self) {
+        self.render_scale = {
+            let width = self.resolution.w as f32 / self.fit.w as f32;
+            let height = self.resolution.h as f32 / self.fit.h as f32;
+            if width < height {
+                width
+            } else {
+                height
+            }
+        };
+    }
+    pub fn get_map_size(&self) -> (f32,f32) {
+        //render scale is the number of pixels in a chunk
+        let width = self.render_scale * self.size.w as f32;
+        let height = self.render_scale * self.size.h as f32;
+        (width, height)
+    }
 }
 
 //Overall configuration file
@@ -179,9 +203,11 @@ impl Configuration {
         self.texture_map.load_image();
     }
 
-    pub fn load_chunks(&mut self, dungeons: Vec<data::dungeon::DungeonChunk>) {
-        for chunk in dungeons {
-            let mut chunk_buf = image::ImageBuffer::new(CHUNK_SIZE as u32, CHUNK_SIZE as u32);
+    //pre-generate chunks
+    pub fn load_chunks(&mut self, ctx: &mut ggez::Context, dungeons: Vec<data::dungeon::DungeonChunk>) {
+        let size = (CHUNK_SIZE * TILE_SIZE) as u32;
+        for (i,chunk) in dungeons.iter().enumerate() {
+            let mut chunk_buf = image::ImageBuffer::new(size,size);
             for (y, rows) in chunk.matrix.iter().enumerate() {
                 for (x, tile) in rows.iter().enumerate() {
                     let tile_buf = self.texture_map.tile_buf[tile.clone() as usize].clone();
@@ -190,66 +216,18 @@ impl Configuration {
                     image::imageops::overlay(&mut chunk_buf, &tile_buf, x as i64 * TILE_SIZE as i64, y as i64 * TILE_SIZE as i64);
                 }
             }
-            self.texture_map.chunk_buf.push(chunk_buf);
+            if i == 0 {
+                chunk_buf.save("chunk.png").unwrap();
+            }
+            let mut writer:std::io::Cursor<Vec<_>> = std::io::Cursor::new(Vec::new());
+            chunk_buf.write_to(&mut writer, image::ImageOutputFormat::Png).unwrap();
+            self.texture_map.chunk_buf.push(graphics::Image::from_bytes(ctx,&writer.into_inner()).unwrap());
         }
     }
 
-    /**
-     * Creates a buffer in which we store the stitched map around the camera
-     */
-    pub fn build_map_as_image(&mut self, camera: (f32, f32), dungeon: data::dungeon::Dungeon) -> Vec<u8> {
-        let size: (u32, u32) = (self.settings.resolution.w, self.settings.resolution.h);
-        let mut result: image::ImageBuffer<image::Rgba<u8>, Vec<u8>> = image::ImageBuffer::new(size.0, size.1);
-        
-        //Use self.texture_map.image_buf to build the image
-        //go through each tile and scale it to "fit" the screen size
-        //the tile scale is derived from self.settings.fit
-        let scale_size = {
-            let width = size.0 / self.settings.fit.w;
-            let height = size.1 / self.settings.fit.h;
-            //choose the smaller of the two
-            if width < height {
-                width * CHUNK_SIZE as u32
-            } else {
-                height * CHUNK_SIZE as u32
-            }
-        };
-
-        // let tile_buf = self.texture_map.tile_buf[tile_enum as usize].clone();
-        // let tile_buf = image::imageops::resize(&tile_buf, scale_size, scale_size, image::imageops::FilterType::Nearest);
-        // image::imageops::overlay(&mut result, &tile_buf, x, y);
-
-        // find where to start drawing the dungeon
-        //  each tile is 32x32
-        //  each chunk is 10x10 tiles
-        //  we fit as many chunks as settings.fit allows on the screen with the rest being cut off
-        
-        let chunk_size = (TILE_SIZE * CHUNK_SIZE, TILE_SIZE * CHUNK_SIZE);
-
-        //camera is in pixels, we need to convert it to chunks
-        let start_x = (camera.0 / chunk_size.0) as u32;
-        let start_y = (camera.1 / chunk_size.1) as u32;
-        let end_x = start_x + self.settings.fit.w;
-        let end_y = start_y + self.settings.fit.h;
-
-        //draw the dungeon
-        for x in start_x..end_x {
-            for y in start_y..end_y {
-                let chunk = if let Some(chunk) = dungeon.get_chunk((x, y)) {
-                    chunk.id
-                } else {
-                    error!("Chunk ({}, {}) not found", x, y);
-                    continue;
-                };
-                let chunk_buf = self.texture_map.chunk_buf[chunk as usize].clone();
-                let chunk_buf = image::imageops::resize(&chunk_buf, scale_size, scale_size, image::imageops::FilterType::Nearest);
-                image::imageops::overlay(&mut result, &chunk_buf, ((x - start_x) as f32 * chunk_size.0) as i64, ((y - start_y) as f32 * chunk_size.1) as i64);
-            }
-        }
-
-        let mut writer:std::io::Cursor<Vec<_>> = std::io::Cursor::new(Vec::new());
-        result.write_to(&mut writer, image::ImageFormat::Png).unwrap();
-        writer.into_inner()
+    //get png of chunks
+    pub fn get_chunks(&self) -> Vec<graphics::Image> {
+        self.texture_map.chunk_buf.clone()
     }
 }
 

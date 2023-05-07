@@ -251,9 +251,7 @@ pub struct Map {
 
 impl Debug for Map {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        //serialize the map into a json string
-        //pretty print it
-        let map = serde_json::to_string_pretty(&self).unwrap();
+        let map = toml::to_string_pretty(&self).unwrap();
         //write the map to the formatter
         write!(f, "{}", map)
     }

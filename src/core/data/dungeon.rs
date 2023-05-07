@@ -2,7 +2,7 @@ use serde::{Serialize,Deserialize};
 use rand::Rng;
 use crate::game::scene::location;
 
-use crate::core::logger::{error};
+use crate::core::logger::{error, debug};
 
 #[derive(Serialize, Deserialize, Clone, Default, Debug)]
 pub struct DungeonChunk {
@@ -106,6 +106,7 @@ impl Dungeon {
         
         dungeon.place_chunks(&chunks, loc);
         dungeon.size = size;
+        debug!("Done creating dungeon");
         dungeon
     }
 

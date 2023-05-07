@@ -9,6 +9,10 @@ const BG_COLOR: Color = Color::new(0.0, 0.0, 0.0, 1.0);
 
 const TEXT_SIZE: f32 = 18.0;
 
+#[allow(dead_code)]
+const TILE_SIZE: f32 = 32.0;
+const CHUNK_SIZE: f32 = 10.0;
+
 pub struct Game {
     pub data: Box<Scene>,
     pub configuration: Box<Configuration>,
@@ -19,8 +23,8 @@ pub struct Game {
 impl Game {
     pub fn new(ctx: &mut ggez::Context, mut config: Box<Configuration>) -> Game {
         let mut scene = Box::new(Scene::new(*(config.clone())));
-        config.load_chunks(scene.clone().map.unwrap().dungeon_list.clone());
-        let camera: (f32, f32) = (config.settings.size.w as f32/2.0, config.settings.size.h as f32/2.0);
+        config.load_chunks(ctx, scene.clone().map.unwrap().dungeon_list.clone());
+        let camera: (f32, f32) = (config.settings.get_map_size().0/2.0, config.settings.get_map_size().1/2.0);
         scene.set_camera(camera);
         Game {
             data: scene,
@@ -89,12 +93,35 @@ impl Event for Game {
         //get all tiles in data.map.map
         //scale each tile by self.configuration.settings.fit
         if let Some(val) = &self.data.map {
-            let raw_png = self.configuration.build_map_as_image(self.data.camera, val.dungeon.clone());
-            if let Ok(ok) = graphics::Image::from_bytes(ctx, &raw_png) {
-                canvas.draw(&ok, DrawParam::default().dest(glam::Vec2::ZERO));
-            } else {
-                error!("Failed to load image");
-            };
+            //get chunk buffer
+            let chunk_buffer = self.configuration.get_chunks();
+            let dungeon = val.dungeon.clone();
+            let camera = self.data.camera;
+            let chunk_size = CHUNK_SIZE * TILE_SIZE;
+            //camera is in pixels, we need to convert it to chunks
+            let start_x = (camera.0 / chunk_size) as u32;
+            let start_y = (camera.1 / chunk_size) as u32;
+            let end_x = start_x + self.configuration.settings.fit.w;
+            let end_y = start_y + self.configuration.settings.fit.h;
+            //render scale refers to pixels per chunk
+            let render_size = self.configuration.settings.render_scale;
+            let render_scale = render_size / chunk_size;
+            debug!("Start: ({}, {}), End: ({}, {}), Render Size vs Chunk Size: ({},{})", start_x, start_y, end_x, end_y, render_size, chunk_size);
+            //get all chunks in range
+            for x in start_x..end_x {
+                for y in start_y..end_y {
+                    //get chunk
+                    let chunk = if let Some(chunk) = dungeon.get_chunk((x, y)) {
+                        chunk.id
+                    } else {
+                        error!("Chunk ({}, {}) not found", x, y);
+                        continue;
+                    };
+                    let chunk = chunk_buffer.get(chunk as usize).unwrap().clone();
+                    //draw chunk
+                    canvas.draw(&chunk, DrawParam::default().scale(glam::Vec2::new(render_scale,render_scale)).dest(glam::Vec2::new(x as f32 * render_size, y as f32 * render_size)));
+                }
+            }       
         } else {
             error!("Failed to load map");
         }
