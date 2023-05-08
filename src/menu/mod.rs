@@ -166,23 +166,17 @@ impl EventHandler for Menu {
                 self.event = None;
             }
             if self.event.is_some() {
-                let res = self.event.as_mut().unwrap().update(ctx);
-                if let Err(err) = res {
-                    return Err(err);
-                }
+                self.event.as_mut().unwrap().update(ctx);
             }
         }
         self.gui.update(ctx);
         Ok(())
     }
     fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult {
-        if self.event.is_some() {
-            let res = self.event.as_mut().unwrap().draw(ctx);
-            if let Err(err) = res {
-                return Err(err);
-            }
+        let mut canvas = graphics::Canvas::from_frame(ctx, BG_COLOR);
+        if let Some(val) = self.event.as_mut() {
+            val.draw(&mut canvas);
         } else {
-            let mut canvas = graphics::Canvas::from_frame(ctx, BG_COLOR);
             //resize image to fit screen
             let bg_param = DrawParam::default().dest(glam::Vec2::ZERO).scale(glam::Vec2::new(
                 self.configuration.settings.resolution.w as f32 / self.background.width() as f32,
@@ -190,8 +184,7 @@ impl EventHandler for Menu {
             ));
             canvas.draw(&self.background, bg_param);
             canvas.draw(&self.gui, DrawParam::default().dest(glam::Vec2::ZERO));
-            return canvas.finish(ctx)
         }
-        Ok(())
+        canvas.finish(ctx)
     }
 }

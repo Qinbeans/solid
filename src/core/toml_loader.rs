@@ -17,6 +17,7 @@ use serde::{Serialize, Deserialize};
 #[allow(dead_code)]
 const TILE_SIZE: f32 = 32.0;
 const CHUNK_SIZE: f32 = 10.0;
+const RENDER_CHUNK_SIZE: f32 = 320.0;
 
 //Position and size of a texture in a texture map
 #[derive(Deserialize, Serialize, Clone, Debug)]
@@ -52,7 +53,7 @@ pub struct TextureMap {
     pub tiles: Vec<String>,
     pub textures: Vec<Texture>,
     #[serde(skip)]
-    pub image_buf: image::ImageBuffer<image::Rgba<u8>, Vec<u8>>,
+    pub texture_buf: HashMap<String, image::ImageBuffer<image::Rgba<u8>, Vec<u8>>>,
     #[serde(skip)]
     pub tile_buf: Vec<image::ImageBuffer<image::Rgba<u8>, Vec<u8>>>,
     #[serde(skip)]
@@ -70,11 +71,18 @@ impl TextureMap {
         let mut buf = Vec::new();
         buf_reader.read_to_end(&mut buf).unwrap();
         let img = image::load_from_memory(&buf).unwrap();
-        self.image_buf = img.to_rgba8();
+        let mut image_buf = img.to_rgba8();
         for tile in &self.tiles {
             let tile_shape = self.textures.iter().find(|x| x.id == *tile).unwrap().rect.clone();
-            let tile_buf = self.image_buf.sub_image(tile_shape.x as u32, tile_shape.y as u32, tile_shape.w as u32, tile_shape.h as u32).to_image();
+            let tile_buf = image_buf.sub_image(tile_shape.x as u32, tile_shape.y as u32, tile_shape.w as u32, tile_shape.h as u32).to_image();
             self.tile_buf.push(tile_buf);
+        }
+        //remove tiles from texture map
+        self.textures.retain(|x| !self.tiles.contains(&x.id));
+        for texture in &self.textures {
+            let texture_shape = texture.rect.clone();
+            let texture_buf = image_buf.sub_image(texture_shape.x as u32, texture_shape.y as u32, texture_shape.w as u32, texture_shape.h as u32).to_image();
+            self.texture_buf.insert(texture.id.clone(), texture_buf);
         }
     }
 }
@@ -115,11 +123,13 @@ pub struct Settings {
     pub scale: f32,
     #[serde(skip)]
     pub render_scale: f32,
+    #[serde(skip)]
+    pub render_size: f32,
 }
 
 impl Settings {
     pub fn set_render_scale(&mut self) {
-        self.render_scale = {
+        self.render_size = {
             let width = self.resolution.w as f32 / self.fit.w as f32;
             let height = self.resolution.h as f32 / self.fit.h as f32;
             if width < height {
@@ -128,6 +138,7 @@ impl Settings {
                 height
             }
         };
+        self.render_scale = self.render_size / RENDER_CHUNK_SIZE;
     }
     pub fn get_map_size(&self) -> (f32,f32) {
         //render scale is the number of pixels in a chunk
@@ -216,9 +227,8 @@ impl Configuration {
                     image::imageops::overlay(&mut chunk_buf, &tile_buf, x as i64 * TILE_SIZE as i64, y as i64 * TILE_SIZE as i64);
                 }
             }
-            if i == 0 {
-                chunk_buf.save("chunk.png").unwrap();
-            }
+            #[cfg(debug_assertions)]
+            chunk_buf.save(format!("chunk_{}.png",i)).unwrap();
             let mut writer:std::io::Cursor<Vec<_>> = std::io::Cursor::new(Vec::new());
             chunk_buf.write_to(&mut writer, image::ImageOutputFormat::Png).unwrap();
             self.texture_map.chunk_buf.push(graphics::Image::from_bytes(ctx,&writer.into_inner()).unwrap());

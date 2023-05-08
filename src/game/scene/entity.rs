@@ -1,8 +1,9 @@
 use std::collections::HashMap;
 
+use ggez::graphics::Image;
 use serde::{Serialize, Deserialize};
 
-use crate::core::{toml_loader::{Rect, Size}, data::{Stats, mob::{self,Range}, race::Race, class::Class, character, item, effect::Effect, Affinity}, functions::Vector2D};
+use crate::core::{toml_loader::{Rect, Size}, data::{Stats, mob::{self,Range}, race::Race, class::Class, character, item, effect::Effect, Affinity}, functions::Vector2D, Direction};
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 
@@ -39,6 +40,8 @@ pub struct Character {
     pub affinity: Affinity,
     pub stats: Stats,
     pub inventory: Inventory,
+    #[serde(skip)]
+    pub texture: Vec<Image>,
 }
 
 impl Character {
@@ -86,8 +89,24 @@ impl Character {
                 data: items,
                 apparel,
                 holding,
-            }
+            },
+            texture: Vec::new()
         }
+    }
+
+    pub fn push_texture(&mut self, texture: Image) {
+        self.texture.push(texture);
+    }
+
+    pub fn get_texture(&self, direction: Direction) -> &Image {
+        if direction == Direction::Down {
+            return &self.texture[0];
+        } else if direction == Direction::Left {
+            return &self.texture[1];
+        } else if direction == Direction::Right {
+            return &self.texture[2];
+        }
+        &self.texture[3]
     }
 }
 

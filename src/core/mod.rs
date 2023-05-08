@@ -1,3 +1,5 @@
+use ggez::graphics;
+
 pub mod functions;
 pub mod data;
 pub mod toml_loader;
@@ -62,7 +64,21 @@ pub mod logger {
 }
 
 pub trait Event {
-    fn update(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()>;
-    fn draw(&mut self, ctx: &mut ggez::Context) -> ggez::GameResult<()>;
+    fn update(&mut self, ctx: &mut ggez::Context);
+    fn draw(&mut self, canvas: &mut graphics::Canvas);
     fn status(&self) -> bool;
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub enum Direction {
+    Down,
+    Left,
+    Right,
+    Up,
+}
+
+impl Default for Direction {
+    fn default() -> Self {
+        Self::Down
+    }
 }

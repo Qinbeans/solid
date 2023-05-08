@@ -2,7 +2,7 @@ use serde::{Serialize,Deserialize};
 use rand::Rng;
 use crate::game::scene::location;
 
-use crate::core::logger::{error, debug};
+use crate::core::logger::{error, debug, alert};
 
 #[derive(Serialize, Deserialize, Clone, Default, Debug)]
 pub struct DungeonChunk {
@@ -101,9 +101,8 @@ impl Dungeon {
         for i in 0..size.0 {
             dungeon.chunks[i as usize].resize(size.1 as usize, Some(chunks[0].clone()));
         }
-        dungeon.chunks[size.0 as usize / 2].resize(size.1 as usize, None);
-        dungeon.chunks[size.0 as usize / 2][size.1 as usize / 2] = Some(dungeon_chunk);
-        
+        dungeon.chunks[loc.0 as usize].resize(size.1 as usize, None);
+        dungeon.chunks[loc.0 as usize][loc.1 as usize] = Some(dungeon_chunk);
         dungeon.place_chunks(&chunks, loc);
         dungeon.size = size;
         debug!("Done creating dungeon");
@@ -117,10 +116,20 @@ impl Dungeon {
         }
         //once placed, subtract from entries of this chunk and the neighbor
         //  if the neighbor has no entries, then skip it
-        let weight = rand::thread_rng().gen_range(0..self.net_weight as usize);
-        let index = chunk_options.binary_search_by(|x| x.weight.cmp(&(weight as u16))).unwrap_or_else(|x| x);
-        let mut addition = chunk_options[index].clone();
         let current = self.chunks[location.0 as usize][location.1 as usize].as_mut().unwrap();
+        if current.entries == 0 {
+            alert!("The current chunk is either full or has no entries");
+            return;
+        }
+        
+        let weight = rand::thread_rng().gen_range(1..self.net_weight as usize) as u16;
+        // Chunk 0 -> 0 -> 1/11
+        // Chunk 1 -> 1 - 4 -> 4/11
+        // Chunk 2 -> 5 -> 1/11
+        // Chunk 3 -> 6 - 7 -> 2/11
+        // Chunk 4 -> 8 - 10 -> 3/11
+        let index = chunk_options.iter().position(|x| x.weight > weight).unwrap_or(chunk_options.len() - 1);
+        let mut addition = chunk_options[index].clone();
         //get available entries
         let available_entries = current.entries;
 

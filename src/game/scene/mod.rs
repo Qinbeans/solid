@@ -6,9 +6,11 @@ use std::{collections::HashMap, fmt::{Debug, Formatter}};
 use crate::core::{logger::{error}, data::dungeon::{Dungeon, DungeonChunk}, toml_loader};
 
 use self::entity::{Character};
+use ggez::graphics;
+use image::GenericImage;
 use rand::Rng;
 
-use crate::core::{toml_loader::{Size, TomlAsset, Configuration}, data};
+use crate::core::{toml_loader::{Size, TomlAsset, Configuration}, data, Direction};
 use serde::{Serialize, Deserialize};
 use location::Location;
 use serde_with::serde_as;
@@ -19,6 +21,9 @@ const DATADIR: &str = "core/data";
 pub struct Scene {
     pub map: Option<Map>,
     pub camera: (f32, f32),
+    #[serde(skip)]
+    // 0 -> down, 1 -> left, 2 -> right, 3 -> up
+    pub direction: Direction,
 }
 
 impl Scene {
@@ -225,13 +230,47 @@ impl Scene {
     }
 
     pub fn move_vert(&mut self, amount: f32) {
+        if amount > 0.0 {
+            self.direction = Direction::Down;
+        } else if amount < 0.0 {
+            self.direction = Direction::Up;
+        }
         self.camera.1 += amount;
     }
 
     pub fn move_horiz(&mut self, amount: f32) {
+        if amount > 0.0 {
+            self.direction = Direction::Right;
+        } else if amount < 0.0 {
+            self.direction = Direction::Left;
+        }
         self.camera.0 += amount;
     }
 
+    pub fn set_char_text(&mut self, ctx: &mut ggez::Context, textures: HashMap<String, image::ImageBuffer<image::Rgba<u8>, Vec<u8>>>) {
+        let character = self.map.as_mut().unwrap().character.as_mut().unwrap();
+        let race = character.race.id.clone();
+        let mut texture = textures.get(&race).unwrap().clone().sub_image(0, 0, 16, 32).to_image();
+        let mut writer = std::io::Cursor::new(Vec::new());
+        texture.write_to(&mut writer, image::ImageOutputFormat::Png).unwrap();
+        character.push_texture(graphics::Image::from_bytes(ctx, &writer.into_inner()).unwrap());
+        let right = textures.get(&race).unwrap().clone().sub_image(16, 0, 16, 32).to_image();
+        let left = image::imageops::flip_horizontal(&right);
+        writer = std::io::Cursor::new(Vec::new());
+        left.write_to(&mut writer, image::ImageOutputFormat::Png).unwrap();
+        character.push_texture(graphics::Image::from_bytes(ctx, &writer.into_inner()).unwrap());
+        writer = std::io::Cursor::new(Vec::new());
+        right.write_to(&mut writer, image::ImageOutputFormat::Png).unwrap();
+        character.push_texture(graphics::Image::from_bytes(ctx, &writer.into_inner()).unwrap());
+        texture = textures.get(&race).unwrap().clone().sub_image(32, 0, 16, 32).to_image();
+        writer = std::io::Cursor::new(Vec::new());
+        texture.write_to(&mut writer, image::ImageOutputFormat::Png).unwrap();
+        character.push_texture(graphics::Image::from_bytes(ctx, &writer.into_inner()).unwrap());
+    }
+
+    pub fn get_character_cln(&self) -> Character {
+        self.map.as_ref().unwrap().character.as_ref().unwrap().clone()
+    }
 }
 
 

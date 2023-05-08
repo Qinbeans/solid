@@ -29,13 +29,13 @@ textures=[
     {id="item.weapon.rusty_dagger",rect={x=48,y=48,w=16,h=16}},
     {id="item.weapon.excalibur",rect={x=64,y=32,w=16,h=32}},
     # Row 4 - 6: races -> front, left, back
-    {id="race.human",rect={x=80,y=32,w=32,h=48}},
-    {id="race.demon",rect={x=128,y=32,w=32,h=48}},
-    {id="race.elf",rect={x=176,y=32,w=32,h=48}},
-    {id="race.beastman",rect={x=0,y=64,w=32,h=48}},
-    {id="race.angel",rect={x=48,y=64,w=32,h=48}},
+    {id="race.human",rect={x=80,y=32,w=48,h=32}},
+    {id="race.demon",rect={x=128,y=32,w=48,h=32}},
+    {id="race.elf",rect={x=176,y=32,w=48,h=32}},
+    {id="race.beastman",rect={x=0,y=64,w=48,h=32}},
+    {id="race.angel",rect={x=48,y=64,w=48,h=32}},
     # Row 7: races -> front, left, back
-    {id="mob.zombie",rect={x=96,y=64,w=32,h=48}},
+    {id="mob.zombie",rect={x=96,y=64,w=48,h=32}},
 ]
 
 # default settings
