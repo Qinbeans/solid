@@ -2,7 +2,7 @@ use serde::{Serialize,Deserialize};
 use rand::Rng;
 use crate::game::scene::location;
 
-use crate::core::logger::{error, debug, alert};
+use crate::core::logger::{error, debug};
 
 #[derive(Serialize, Deserialize, Clone, Default, Debug)]
 pub struct DungeonChunk {
@@ -16,12 +16,10 @@ pub struct DungeonChunk {
     pub weight: u16,
     pub spawn: Option<location::Location>,
     pub id: u16,
+    pub rotations: u16,
 }
 
 impl DungeonChunk {
-    pub fn get_shape(&self) -> (usize, usize) {
-        (self.matrix.len(), self.matrix[0].len())
-    }
     /**
      * Rotates a dungeon that matches the dungeon's entries to the given entries
      * entries: u8 - The entries to rotate to
@@ -52,27 +50,18 @@ impl DungeonChunk {
                 choices.push(i);
             }
         }
+        if choices.len() == 0 {
+            // alert!("No choices for rotation");
+            return;
+        }
         // pick a random choice
         let choice = rand::thread_rng().gen_range(0..choices.len());
         
         // get number of rotations are needed to get to the choice
-        let rotations = choices[choice];
-        let shape = self.get_shape();
-        // rotate the matrix
-        for _ in 0..rotations {
-            for i in 0..shape.0 {
-                for j in 0..shape.1 {
-                    let temp = self.matrix[i][j];
-                    self.matrix[i][j] = self.matrix[j][shape.0 - i - 1];
-                    self.matrix[j][shape.0 - i - 1] = self.matrix[shape.0 - i - 1][shape.0 - j - 1];
-                    self.matrix[shape.0 - i - 1][shape.0 - j - 1] = self.matrix[shape.0 - j - 1][i];
-                    self.matrix[shape.0 - j - 1][i] = temp;
-                }
-            }
-        }
+        self.rotations = choices[choice];
 
         //rotate the entries
-        self.entries = (self.entries >> rotations) | (self.entries << (4 - rotations)) - polar_entry;
+        self.entries = (self.entries >> self.rotations) | (self.entries << (4 - self.rotations)) - polar_entry;
     }
 }
 
@@ -91,7 +80,7 @@ impl Dungeon {
      * default: u16 - The default chunk to use if there is no chunk at a given location
      * returns: Dungeon - The new dungeon
      */
-    pub fn new(size: (u32, u32), default_chunk: u16, chunks: Vec<DungeonChunk>, default_loc: location::Location) -> Dungeon {
+    pub fn new(size: (u32, u32), net_weight: u16, default_chunk: u16, chunks: Vec<DungeonChunk>, default_loc: location::Location) -> Dungeon {
         let mut dungeon = Dungeon::default();
         //start at the center of the dungeon, place the spawn chunk with the given default
         let loc = (size.0 / 2, size.1 / 2);
@@ -103,22 +92,22 @@ impl Dungeon {
         }
         dungeon.chunks[loc.0 as usize].resize(size.1 as usize, None);
         dungeon.chunks[loc.0 as usize][loc.1 as usize] = Some(dungeon_chunk);
-        dungeon.place_chunks(&chunks, loc);
         dungeon.size = size;
+        dungeon.net_weight = net_weight;
+        dungeon.place_chunks(&chunks, loc);
         debug!("Done creating dungeon");
         dungeon
     }
 
     fn place_chunks(&mut self, chunk_options: &Vec<DungeonChunk>, location: (u32, u32)) {
         if location.0 >= self.size.0 || location.1 >= self.size.1 {
-            error!("Attempted to place a chunk outside of the dungeon bounds");
+            error!("Attempted to place a chunk outside of the dungeon bounds, {}x{} > {}x{}", location.0, location.1, self.size.0, self.size.1);
             return;
         }
         //once placed, subtract from entries of this chunk and the neighbor
         //  if the neighbor has no entries, then skip it
         let current = self.chunks[location.0 as usize][location.1 as usize].as_mut().unwrap();
         if current.entries == 0 {
-            alert!("The current chunk is either full or has no entries");
             return;
         }
         
@@ -133,38 +122,53 @@ impl Dungeon {
         //get available entries
         let available_entries = current.entries;
 
+        if available_entries == 0 {
+            return;
+        }
+
         let mut next_loc = location;
 
         //check if available entries has anything to the north
-        if available_entries & 1 != 0 && location.1 + 1 < self.size.1 {
-            //This means North is available
-            //rotate the addition to match the north
-            addition.rotate(1);
-            current.entries -= 1;
-            next_loc.1 += 1;
-        } else if available_entries & 2 != 0 && location.0 + 1 < self.size.0{
-            //This means East is available
-            //rotate the addition to match the east
-            addition.rotate(2);
-            current.entries -= 2;
-            next_loc.0 += 1;
-        } else if available_entries & 4 != 0 && location.1 > 0 {
-            //This means South is available
-            //rotate the addition to match the south
-            addition.rotate(4);
-            current.entries -= 4;
-            next_loc.1 -= 1;
-        } else if available_entries & 8 != 0 && location.0 > 0{
-            //This means West is available
-            //rotate the addition to match the west
-            addition.rotate(8);
-            current.entries -= 8;
-            next_loc.0 -= 1;
-        } else {
-            //This means there are no available entries
-            //  so we can't place this chunk
-            error!("Attempted to place a chunk with no available entries");
-            return;
+        if available_entries & 1 != 0 {
+            if location.1 + 1 < self.size.1 {
+                //This means North is available
+                //rotate the addition to match the north
+                addition.rotate(1);
+                current.entries -= 1;
+                next_loc.1 += 1;
+            } else {
+                return;
+            }
+        } else if available_entries & 2 != 0 {
+            if location.0 + 1 < self.size.0 {
+                //This means East is available
+                //rotate the addition to match the east
+                addition.rotate(2);
+                current.entries -= 2;
+                next_loc.0 += 1;
+            } else {
+                return;
+            }
+        } else if available_entries & 4 != 0 {
+            if location.1 > 0 {
+                //This means South is available
+                //rotate the addition to match the south
+                addition.rotate(4);
+                current.entries -= 4;
+                next_loc.1 -= 1;
+            } else {
+                return;
+            }
+        } else if available_entries & 8 != 0 {
+            if location.0 > 0 {
+                //This means West is available
+                //rotate the addition to match the west
+                addition.rotate(8);
+                current.entries -= 8;
+                next_loc.0 -= 1;
+            } else {
+                return;
+            }
         }
         self.chunks[next_loc.0 as usize][next_loc.1 as usize] = Some(addition.clone());
 

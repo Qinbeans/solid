@@ -42,10 +42,14 @@ pub struct Character {
     pub inventory: Inventory,
     #[serde(skip)]
     pub texture: Vec<Image>,
+    #[serde(skip)]
+    pub position: (i32, i32),
+    #[serde(skip)]
+    pub direction: Direction,
 }
 
 impl Character {
-    pub fn new(character: character::Character, items: HashMap<String, Item>, classes: HashMap<String, Class>, races: HashMap<String, Race>) -> Self {
+    pub fn new(character: character::Character, items: HashMap<String, Item>, classes: HashMap<String, Class>, races: HashMap<String, Race>, position: (i32,i32)) -> Self {
         let mut apparel = HashMap::new();
         for slot in character.inventory.apparel {
             let item = if let Some(val) = items.get(&slot.item){
@@ -90,7 +94,9 @@ impl Character {
                 apparel,
                 holding,
             },
-            texture: Vec::new()
+            texture: Vec::new(),
+            position,
+            direction: Direction::Down,
         }
     }
 
@@ -107,6 +113,19 @@ impl Character {
             return &self.texture[2];
         }
         &self.texture[3]
+    }
+
+    pub fn move_vert(&mut self, step: i32) {
+        self.position.1 += step;
+    }
+
+    pub fn move_hor(&mut self, step: i32) {
+        self.position.0 += step;
+    }
+
+    #[allow(dead_code)]
+    pub fn shape(&self) -> (u32,u32) {
+        (self.texture[0].width(), self.texture[0].height())
     }
 }
 

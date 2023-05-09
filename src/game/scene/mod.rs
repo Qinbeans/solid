@@ -236,6 +236,7 @@ impl Scene {
             self.direction = Direction::Up;
         }
         self.camera.1 += amount;
+        self.map.as_mut().unwrap().character.as_mut().unwrap().move_vert(((amount % 1.0) * 10.0) as i32);
     }
 
     pub fn move_horiz(&mut self, amount: f32) {
@@ -245,6 +246,7 @@ impl Scene {
             self.direction = Direction::Left;
         }
         self.camera.0 += amount;
+        self.map.as_mut().unwrap().character.as_mut().unwrap().move_hor(((amount % 1.0) * 10.0) as i32);
     }
 
     pub fn set_char_text(&mut self, ctx: &mut ggez::Context, textures: HashMap<String, image::ImageBuffer<image::Rgba<u8>, Vec<u8>>>) {
@@ -323,7 +325,7 @@ impl Map {
 
         let player_spawn = Location::new(locs[0].clone(), None);
         //create dungeon
-        map.dungeon = Dungeon::new((configs.settings.size.w,configs.settings.size.h), dungeon.default_chunk, dungeon.chunks, player_spawn);
+        map.dungeon = Dungeon::new((configs.settings.size.w,configs.settings.size.h), dungeon.net_weight, dungeon.default_chunk, dungeon.chunks, player_spawn);
 
         let rooms = map.dungeon.clone().rooms();
 
@@ -337,7 +339,7 @@ impl Map {
         }
 
         //create character
-        map.character = Some(entity::Character::new(character, items, class_map, race_map));
+        map.character = Some(entity::Character::new(character, items, class_map, race_map, (configs.settings.size.w as i32, configs.settings.size.h as i32)));
 
         map
     }

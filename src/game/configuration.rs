@@ -84,7 +84,7 @@ impl Event for Game {
         // we want to check for key press every 1/100th of a second
         let cycle = 100.0 / self.heartbeat.0 as f64 * self.heartbeat.1 as f64;
         
-        if cycle == 100.0 {
+        if cycle >= 100.0 {
             if ctx.keyboard.is_key_pressed(ggez::input::keyboard::KeyCode::W) {
                 self.data.move_vert(-0.1);//refers to tile based movement
             }else if ctx.keyboard.is_key_pressed(ggez::input::keyboard::KeyCode::S) {
@@ -131,13 +131,13 @@ impl Event for Game {
         for x in start_x..end_x {
             for y in start_y..end_y {
                 let chunk = if let Some(chunk) = dungeon.get_chunk((x, y)) {
-                    chunk.id
+                    chunk
                 } else {
                     error!("Chunk ({}, {}) not found", x, y);
                     continue;
                 };
                 canvas.draw(
-                    chunk_buffer.get(chunk as usize).unwrap(),
+                    chunk_buffer.get(chunk.id as usize).unwrap(),
                     DrawParam::default().scale(
                         glam::Vec2::new(
                             self.configuration.settings.render_scale,
@@ -148,6 +148,9 @@ impl Event for Game {
                             (x - start_x) as f32 * self.configuration.settings.render_size - self.configuration.settings.render_size / 2.0,
                             (y - start_y) as f32 * self.configuration.settings.render_size - self.configuration.settings.render_size / 2.0
                         )
+                    ).rotation(
+                        //rotations refers to number of 90 degree rotations
+                    chunk.rotations as f32 * std::f32::consts::FRAC_PI_2
                     )
                 );
             }
