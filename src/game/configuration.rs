@@ -150,7 +150,7 @@ impl Event for Game {
                         )
                     ).rotation(
                         //rotations refers to number of 90 degree rotations
-                    chunk.rotations as f32 * std::f32::consts::FRAC_PI_2
+                        chunk.rotations as f32 * 90.0
                     )
                 );
             }
